@@ -1,22 +1,60 @@
 package com.example.fiscalflow
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import coil.compose.AsyncImage
 
 @Composable
 fun CategoryScreen(
     modifier: Modifier = Modifier,
-    onLogout: () -> Unit
+    categories: SnapshotStateList<String>, // shared with Expense screen
+    expenses: SnapshotStateList<Expense>,  // saved expenses
+    onLogout: () -> Unit,
+    onAddExpense: () -> Unit = {}
 ) {
     var categoryName by remember { mutableStateOf("") }
-    val categories = remember { mutableStateListOf("Groceries", "Rent", "Utilities") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // null = show category list, otherwise show expenses for that category
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+
+    if (selectedCategory != null) {
+        CategoryExpensesView(
+            modifier = modifier,
+            categoryName = selectedCategory.orEmpty(),
+            expenses = expenses.filter { it.category == selectedCategory },
+            onBack = { selectedCategory = null }
+        )
+        return
+    }
 
     Column(
         modifier = modifier
@@ -39,6 +77,16 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Opens the Expense screen
+        Button(
+            onClick = onAddExpense,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Add Expense")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Category Input Section
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -46,7 +94,10 @@ fun CategoryScreen(
         ) {
             OutlinedTextField(
                 value = categoryName,
-                onValueChange = { categoryName = it; errorMessage = null },
+                onValueChange = {
+                    categoryName = it
+                    errorMessage = null
+                },
                 label = { Text("New Category") },
                 singleLine = true,
                 modifier = Modifier.weight(1f)
@@ -74,7 +125,7 @@ fun CategoryScreen(
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = errorMessage!!,
+                text = errorMessage.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
             )
@@ -89,18 +140,115 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        Text(
+            text = "Tap a category to view its expenses",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Display Category List
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             items(categories) { category ->
+                val count = expenses.count { it.category == category }
+
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Text(
-                        text = category,
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { selectedCategory = category },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = category,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "$count expense(s)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Shows expenses saved under one category
+@Composable
+private fun CategoryExpensesView(
+    modifier: Modifier = Modifier,
+    categoryName: String,
+    expenses: List<Expense>,
+    onBack: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = categoryName,
+                style = MaterialTheme.typography.headlineMedium
+            )
+            TextButton(onClick = onBack) {
+                Text("Back")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (expenses.isEmpty()) {
+            Text(
+                text = "No expenses in this category yet.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(expenses) { expense ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Amount: R${expense.amount}",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "Description: ${expense.description}")
+                            Text(text = "Start date: ${expense.startDate}")
+                            Text(text = "End date: ${expense.endDate}")
+
+                            if (!expense.photoUri.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                AsyncImage(
+                                    model = expense.photoUri.toUri(),
+                                    contentDescription = "Expense receipt",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(160.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

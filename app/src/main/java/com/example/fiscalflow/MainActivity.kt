@@ -22,6 +22,14 @@ class MainActivity : ComponentActivity() {
                 // temporary user credential deposit to hold usernames before database
                 val userAccounts = remember { mutableStateMapOf("admin" to "password123") }
 
+                // categories used on Category screen and Expense dropdown
+                val categories = remember {
+                    mutableStateListOf("Groceries", "Rent", "Utilities")
+                }
+
+                // temporary expenses list (no database yet)
+                val expenses = remember { mutableStateListOf<Expense>() }
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         "login" -> {
@@ -45,7 +53,21 @@ class MainActivity : ComponentActivity() {
                         "categories" -> {
                             CategoryScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onLogout = { currentScreen = "login" }
+                                categories = categories,
+                                expenses = expenses,
+                                onLogout = { currentScreen = "login" },
+                                onAddExpense = { currentScreen = "expense" }
+                            )
+                        }
+                        "expense" -> {
+                            ExpenseScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                categories = categories,
+                                onExpenseSaved = { expense ->
+                                    expenses.add(expense)
+                                    currentScreen = "categories" // go back after save
+                                },
+                                onBack = { currentScreen = "categories" }
                             )
                         }
                     }
