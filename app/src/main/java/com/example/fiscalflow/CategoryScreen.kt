@@ -52,16 +52,13 @@ fun CategoryScreen(
     // null = show category list, otherwise show expenses for that category
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
-    if (selectedCategory != null) {
-        CategoryExpensesView(
-            modifier = modifier,
-            categoryName = selectedCategory.orEmpty(),
-            expenses = expenses.filter { it.category == selectedCategory },
-            onBack = { selectedCategory = null }
-        )
-        return
-    }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp)
+    ) {
 
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -84,10 +81,6 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Opens the Expense screen
-
-            Text("Expense History")
-        }
         // Monthly Spending Progress
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -167,7 +160,12 @@ fun CategoryScreen(
                 onClick = {
                     if (categoryName.isBlank()) {
                         errorMessage = "Category name cannot be empty"
-                    } else if (categories.any { it.equals(categoryName.trim(), ignoreCase = true) }) {
+                    } else if (categories.any {
+                            it.equals(
+                                categoryName.trim(),
+                                ignoreCase = true
+                            )
+                        }) {
                         errorMessage = "Category already exists"
                     } else {
                         categories.add(categoryName.trim())
@@ -175,10 +173,13 @@ fun CategoryScreen(
                         errorMessage = null
                     }
                 }
-            ) {
+            )
+            {
                 Text("Add")
             }
+
         }
+
 
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -209,7 +210,8 @@ fun CategoryScreen(
         // Display Category List
         LazyColumn(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+            .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
@@ -234,90 +236,93 @@ fun CategoryScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(3.dp))
+                    // Opens the Expense screen
+                    Button(
+                        onClick = onAddExpense,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    {
+                        Text("Add Expense")
+                    }
+                    Button(onClick = onOpenGoals)
+                    {
+                        Text("Monthly Goals")
+                    }
+                    Button(onClick = onViewHistory)
+                    {
+                        Text("View expense History")
+                    }
                 }
-                Button(
-                    onClick = onAddExpense,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Add Expense")
-                }
-                Button(
-                    onClick = onOpenGoals
-                ) {
-                    Text("Monthly Goals")
-                }
-                Button(
-                    onClick = onViewHistory
-                )
-                {
             }
         }
     }
-}
 
-// Shows expenses saved under one category
-@Composable
-private fun CategoryExpensesView(
-    modifier: Modifier = Modifier,
-    categoryName: String,
-    expenses: List<Expense>,
-    onBack: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp)
+    // Shows expenses saved under one category
+    @Composable
+    fun CategoryExpensesView(
+        modifier: Modifier = Modifier,
+        categoryName: String,
+        expenses: List<Expense>,
+        onBack: () -> Unit
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp)
         ) {
-            Text(
-                text = categoryName,
-                style = MaterialTheme.typography.headlineMedium
-            )
-            TextButton(onClick = onBack) {
-                Text("Back")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = categoryName,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                TextButton(onClick = onBack) {
+                    Text("Back")
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (expenses.isEmpty()) {
-            Text(
-                text = "No expenses in this category yet.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(expenses) { expense ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Amount: R${expense.amount}",
-                                style = MaterialTheme.typography.titleMedium
+            if (expenses.isEmpty()) {
+                Text(
+                    text = "No expenses in this category yet.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(expenses) { expense ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = "Description: ${expense.description}")
-                            Text(text = "Start date: ${expense.startDate}")
-                            Text(text = "End date: ${expense.endDate}")
-
-                            if (!expense.photoUri.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                AsyncImage(
-                                    model = expense.photoUri.toUri(),
-                                    contentDescription = "Expense receipt",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(160.dp),
-                                    contentScale = ContentScale.Crop
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Amount: R${expense.amount}",
+                                    style = MaterialTheme.typography.titleMedium
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "Description: ${expense.description}")
+                                Text(text = "Start date: ${expense.startDate}")
+                                Text(text = "End date: ${expense.endDate}")
+
+                                if (!expense.photoUri.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    AsyncImage(
+                                        model = expense.photoUri.toUri(),
+                                        contentDescription = "Expense receipt",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(160.dp),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                             }
                         }
                     }
