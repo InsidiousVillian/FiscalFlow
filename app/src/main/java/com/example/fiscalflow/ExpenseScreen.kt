@@ -83,7 +83,30 @@ fun ExpenseScreen(
     val years = remember(currentYear) {
         ((currentYear - 5)..(currentYear + 1)).toList()
     }
-
+    //belinda
+    val startDate = Calendar.getInstance().apply {
+        set(
+            startYear,
+            startMonth,
+            startDay,
+            0,
+            0,
+            0
+        )
+        set(Calendar.MILLISECOND, 0)
+    }
+    //belinda
+    val endDate = Calendar.getInstance().apply {
+        set(
+            endYear,
+            endMonth,
+            endDay,
+            23,
+            59,
+            59
+        )
+        set(Calendar.MILLISECOND, 999)
+    }
     // Opens gallery to pick a receipt photo
     val pickImage = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()

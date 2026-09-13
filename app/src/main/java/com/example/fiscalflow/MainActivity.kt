@@ -26,14 +26,23 @@ class MainActivity : ComponentActivity() {
                 val categories = remember {
                     mutableStateListOf("Groceries", "Rent", "Utilities")
                 }
-
                 // temporary expenses list (no database yet)
                 val expenses = remember { mutableStateListOf<Expense>() }
                 // monthly spending goal
                 var budgetGoal by remember {
                     mutableStateOf<BudgetingGoal?>(null)
                 }
+                var usersProgress by remember {
+                    mutableStateOf(UsersProgress())
+                }
+                val totalSpent = expenses.sumOf { it.amount }
 
+                val spendingProgress = budgetGoal?.let {
+                    calculateProgress(
+                        totalSpent = totalSpent,
+                        maximum = it.maximum
+                    )
+                } ?: 0f
                 Scaffold(modifier = Modifier.fillMaxSize())
                 { innerPadding ->
                     when (currentScreen) {
@@ -60,15 +69,21 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 categories = categories,
                                 expenses = expenses,
+                                budgetGoal = budgetGoal,
+                                totalSpent = totalSpent,
+                                spendingProgress = spendingProgress,
                                 onLogout = { currentScreen = "login" },
-                                onAddExpense = { currentScreen = "expense" }
+                                onAddExpense = { currentScreen = "expense" },
+                                onOpenGoals = { currentScreen = "goal" },
+                                onViewHistory = { currentScreen = "history" }
                             )
                         }
                         "expense" -> {
                             ExpenseScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 categories = categories,
-                                onExpenseSaved = { expense ->
+                                onExpenseSaved = {
+                                    expense ->
                                     expenses.add(expense)
                                     currentScreen = "categories" // go back after save
                                 },
@@ -77,22 +92,31 @@ class MainActivity : ComponentActivity() {
                         }
                         "goal" -> {
                             BudgetingScreen(
-                                modifier = Modifier.padding(innerPadding),
+                                Modifier.padding(innerPadding),
                                 currentGoal = budgetGoal,
-
-                                onGoalSaved = { goal ->
+                                onGoalSaved = {
+                                    goal ->
                                     budgetGoal = goal
+                                    usersProgress = usersProgress.copy(xp = usersProgress.xp + 10)
                                     currentScreen = "categories"
                                 },
-
-                                onBack = {
-                                    currentScreen = "categories"
+                                onBack = {currentScreen = "categories"
                                 }
                             )
                         }
+                        "history" -> {
+
+                            ExpensesHistoryScreen(
+                                Modifier.padding(innerPadding),
+                                expenses = expenses,
+                                onBack = { currentScreen = "categories"}
+                            )
+                        }
+
                     }
                 }
             }
         }
     }
 }
+

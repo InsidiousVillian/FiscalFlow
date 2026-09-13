@@ -37,8 +37,14 @@ fun CategoryScreen(
     modifier: Modifier = Modifier,
     categories: SnapshotStateList<String>, // shared with Expense screen
     expenses: SnapshotStateList<Expense>,  // saved expenses
+    budgetGoal: BudgetingGoal?,
+    totalSpent: Double,
+    spendingProgress: Float,
     onLogout: () -> Unit,
-    onAddExpense: () -> Unit = {}
+    onAddExpense: () -> Unit,
+    onOpenGoals: () -> Unit,
+    onViewHistory: () -> Unit
+
 ) {
     var categoryName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -61,6 +67,7 @@ fun CategoryScreen(
             .fillMaxSize()
             .padding(24.dp)
     ) {
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -84,9 +91,72 @@ fun CategoryScreen(
         ) {
             Text("Add Expense")
         }
+        Button(
+            onClick = onOpenGoals
+        ) {
+            Text("Monthly Goals")
+        }
+        Button(
+            onClick = onViewHistory
+        ) {
+            Text("Expense History")
+        }
+        // Monthly Spending Progress
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Monthly Spending",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "R%.2f / R%.2f".format(
+                        totalSpent,
+                        budgetGoal?.maximum ?: 0.0
+                    ),
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                androidx.compose.material3.LinearProgressIndicator(
+                    progress = { spendingProgress },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                budgetGoal?.let { goal ->
+
+                    val message = when {
+                        totalSpent < goal.minimum ->
+                            "🎯 You're below your minimum spending goal."
+
+                        totalSpent <= goal.maximum ->
+                            "⭐ Great! You're within your spending goal."
+
+                        else ->
+                            "⚠️ You've exceeded your maximum goal."
+                    }
+
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
-
         // Category Input Section
         Row(
             modifier = Modifier.fillMaxWidth(),
