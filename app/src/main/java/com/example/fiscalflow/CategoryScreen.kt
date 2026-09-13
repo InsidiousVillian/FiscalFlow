@@ -85,20 +85,7 @@ fun CategoryScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Opens the Expense screen
-        Button(
-            onClick = onAddExpense,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Add Expense")
-        }
-        Button(
-            onClick = onOpenGoals
-        ) {
-            Text("Monthly Goals")
-        }
-        Button(
-            onClick = onViewHistory
-        ) {
+
             Text("Expense History")
         }
         // Monthly Spending Progress
@@ -157,6 +144,7 @@ fun CategoryScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
         // Category Input Section
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -221,8 +209,7 @@ fun CategoryScreen(
         // Display Category List
         LazyColumn(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
@@ -248,6 +235,21 @@ fun CategoryScreen(
                         )
                     }
                 }
+                Button(
+                    onClick = onAddExpense,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Add Expense")
+                }
+                Button(
+                    onClick = onOpenGoals
+                ) {
+                    Text("Monthly Goals")
+                }
+                Button(
+                    onClick = onViewHistory
+                )
+                {
             }
         }
     }

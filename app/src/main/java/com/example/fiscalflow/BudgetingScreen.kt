@@ -60,6 +60,7 @@ fun BudgetingScreen(
 
         Text("Set your minimum and maximum monthly spending." )
             Spacer( modifier = Modifier.height(4.dp) )
+
             // Minimum spending goals implemented
             Text("Minimum monthly goal", fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -78,7 +79,7 @@ fun BudgetingScreen(
                     Text("Minimum monthly goal amount")
                 },
                 placeholder = {
-                    Text("Example: R3000")
+                    Text("Example: 1000")
                 },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -109,10 +110,11 @@ fun BudgetingScreen(
                     Text("Maximum monthly goal amount")
                 },
                 placeholder = {
-                    Text("Example: R8000")
+                    Text("Example: 8000")
                 },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal
                 )
