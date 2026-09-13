@@ -29,8 +29,13 @@ class MainActivity : ComponentActivity() {
 
                 // temporary expenses list (no database yet)
                 val expenses = remember { mutableStateListOf<Expense>() }
+                // monthly spending goal
+                var budgetGoal by remember {
+                    mutableStateOf<BudgetingGoal?>(null)
+                }
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize())
+                { innerPadding ->
                     when (currentScreen) {
                         "login" -> {
                             LoginScreen(
@@ -68,6 +73,21 @@ class MainActivity : ComponentActivity() {
                                     currentScreen = "categories" // go back after save
                                 },
                                 onBack = { currentScreen = "categories" }
+                            )
+                        }
+                        "goal" -> {
+                            BudgetingScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                currentGoal = budgetGoal,
+
+                                onGoalSaved = { goal ->
+                                    budgetGoal = goal
+                                    currentScreen = "categories"
+                                },
+
+                                onBack = {
+                                    currentScreen = "categories"
+                                }
                             )
                         }
                     }
