@@ -58,13 +58,6 @@ fun CategoryScreen(
             .padding(24.dp)
     ) {
 
-    }
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp)
-    ) {
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -92,8 +85,15 @@ fun CategoryScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Monthly Spending",
+                    text = "Budget Goal Progress",
                     style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "This is your spending goal tracker — not the period review.",
+                    style = MaterialTheme.typography.bodySmall
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -138,6 +138,41 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Main actions (kept outside the category list so they only appear once)
+        Button(
+            onClick = onAddExpense,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Add Expense")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = onOpenGoals,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Monthly Goals")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = onViewHistory,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Review Category Totals by Period")
+        }
+
+        Text(
+            text = "Pick This Week, This Month, or a Custom date range",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Category Input Section
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -173,13 +208,10 @@ fun CategoryScreen(
                         errorMessage = null
                     }
                 }
-            )
-            {
+            ) {
                 Text("Add")
             }
-
         }
-
 
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -211,11 +243,14 @@ fun CategoryScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-            .weight(1f),
+                .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
                 val count = expenses.count { it.category == category }
+                val categoryTotal = expenses
+                    .filter { it.category == category }
+                    .sumOf { it.amount }
 
                 Card(
                     modifier = Modifier
@@ -231,28 +266,10 @@ fun CategoryScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "$count expense(s)",
+                            text = "$count expense(s) · R %.2f".format(categoryTotal),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
-
-                    Spacer(modifier = Modifier.height(3.dp))
-                    // Opens the Expense screen
-                    Button(
-                        onClick = onAddExpense,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    {
-                        Text("Add Expense")
-                    }
-                    Button(onClick = onOpenGoals)
-                    {
-                        Text("Monthly Goals")
-                    }
-                    Button(onClick = onViewHistory)
-                    {
-                        Text("View expense History")
                     }
                 }
             }
