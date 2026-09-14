@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FiscalFlowTheme {
-                var currentScreen by remember { mutableStateOf("login") }
+                var currentScreen by remember { mutableStateOf("welcome") }
 
                 // temporary user credential deposit to hold usernames before database
                 val userAccounts = remember { mutableStateMapOf("admin" to "password123") }
@@ -46,6 +46,13 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize())
                 { innerPadding ->
                     when (currentScreen) {
+                        "welcome" -> {
+                            WelcomeScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onGetStarted = { currentScreen = "signup" },
+                                onNavigateToLogin = { currentScreen = "login" }
+                            )
+                        }
                         "login" -> {
                             LoginScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -72,7 +79,7 @@ class MainActivity : ComponentActivity() {
                                 budgetGoal = budgetGoal,
                                 totalSpent = totalSpent,
                                 spendingProgress = spendingProgress,
-                                onLogout = { currentScreen = "login" },
+                                onLogout = { currentScreen = "welcome" },
                                 onAddExpense = { currentScreen = "expense" },
                                 onOpenGoals = { currentScreen = "goal" },
                                 onViewHistory = { currentScreen = "history" }
@@ -119,4 +126,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
