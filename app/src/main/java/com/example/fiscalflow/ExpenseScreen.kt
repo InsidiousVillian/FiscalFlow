@@ -29,7 +29,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,7 +39,7 @@ import java.util.Calendar
 @Composable
 fun ExpenseScreen(
     modifier: Modifier = Modifier,
-    categories: SnapshotStateList<String>,    // categories from Category screen
+    categories: List<String>,                 // categories loaded from Room via ViewModel
     onExpenseSaved: (Expense) -> Unit = {},   // called after save
     onBack: () -> Unit = {}                   // goes back
 ) {

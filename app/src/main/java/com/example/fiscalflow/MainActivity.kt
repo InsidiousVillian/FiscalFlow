@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fiscalflow.ui.theme.FiscalFlowTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,50 +20,51 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FiscalFlowTheme {
+                // Single ViewModel scoped to this Activity. It exposes StateFlows backed by Room.
+                val vm: FiscalFlowViewModel = viewModel(factory = FiscalFlowViewModel.Factory)
+                val scope = rememberCoroutineScope()
+
+                // collectAsStateWithLifecycle stops collecting when the Activity is stopped,
+                // which avoids battery drain and unnecessary DB reads in the background.
+                val categories by vm.categories.collectAsStateWithLifecycle()
+                val expenses by vm.expenses.collectAsStateWithLifecycle()
+                val budgetGoal by vm.budgetGoal.collectAsStateWithLifecycle()
+                // userProgress is observed so future screens can show XP/streak; safe to leave unused for now.
+                @Suppress("UNUSED_VARIABLE")
+                val userProgress by vm.userProgress.collectAsStateWithLifecycle()
+
                 var currentScreen by remember { mutableStateOf("login") }
 
-                // temporary user credential deposit to hold usernames before database
-                val userAccounts = remember { mutableStateMapOf("admin" to "password123") }
-
-                // categories used on Category screen and Expense dropdown
-                val categories = remember {
-                    mutableStateListOf("Groceries", "Rent", "Utilities")
-                }
-                // temporary expenses list (no database yet)
-                val expenses = remember { mutableStateListOf<Expense>() }
-                // monthly spending goal
-                var budgetGoal by remember {
-                    mutableStateOf<BudgetingGoal?>(null)
-                }
-                var usersProgress by remember {
-                    mutableStateOf(UsersProgress())
-                }
+                // Derived values recomputed automatically whenever expenses/goal change in the DB.
                 val totalSpent = expenses.sumOf { it.amount }
-
                 val spendingProgress = budgetGoal?.let {
-                    calculateProgress(
-                        totalSpent = totalSpent,
-                        maximum = it.maximum
-                    )
+                    calculateProgress(totalSpent = totalSpent, maximum = it.maximum)
                 } ?: 0f
-                Scaffold(modifier = Modifier.fillMaxSize())
-                { innerPadding ->
+
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         "login" -> {
                             LoginScreen(
                                 modifier = Modifier.padding(innerPadding),
+                                onLogin = { username, password, onResult ->
+                                    // Room DAOs are suspend, so hop into a coroutine and post the result back.
+                                    scope.launch {
+                                        onResult(vm.login(username, password))
+                                    }
+                                },
                                 onLoginSuccess = { currentScreen = "categories" },
-                                onNavigateToSignUp = { currentScreen = "signup" },
-                                userAccounts = userAccounts
+                                onNavigateToSignUp = { currentScreen = "signup" }
                             )
                         }
                         "signup" -> {
                             SignUpScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onSignUpSuccess = { newUsername, newPassword ->
-                                    userAccounts[newUsername] = newPassword
-                                    currentScreen = "categories"
+                                onSignUp = { username, password, onResult ->
+                                    scope.launch {
+                                        onResult(vm.signUp(username, password))
+                                    }
                                 },
+                                onSignUpSuccess = { currentScreen = "categories" },
                                 onNavigateToLogin = { currentScreen = "login" }
                             )
                         }
@@ -72,6 +76,9 @@ class MainActivity : ComponentActivity() {
                                 budgetGoal = budgetGoal,
                                 totalSpent = totalSpent,
                                 spendingProgress = spendingProgress,
+                                onAddCategory = { name, onResult ->
+                                    vm.addCategory(name, onResult)
+                                },
                                 onLogout = { currentScreen = "login" },
                                 onAddExpense = { currentScreen = "expense" },
                                 onOpenGoals = { currentScreen = "goal" },
@@ -82,10 +89,9 @@ class MainActivity : ComponentActivity() {
                             ExpenseScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 categories = categories,
-                                onExpenseSaved = {
-                                    expense ->
-                                    expenses.add(expense)
-                                    currentScreen = "categories" // go back after save
+                                onExpenseSaved = { expense ->
+                                    vm.addExpense(expense)
+                                    currentScreen = "categories"
                                 },
                                 onBack = { currentScreen = "categories" }
                             )
@@ -94,29 +100,23 @@ class MainActivity : ComponentActivity() {
                             BudgetingScreen(
                                 Modifier.padding(innerPadding),
                                 currentGoal = budgetGoal,
-                                onGoalSaved = {
-                                    goal ->
-                                    budgetGoal = goal
-                                    usersProgress = usersProgress.copy(xp = usersProgress.xp + 10)
+                                onGoalSaved = { goal ->
+                                    vm.saveGoal(goal)
                                     currentScreen = "categories"
                                 },
-                                onBack = {currentScreen = "categories"
-                                }
+                                onBack = { currentScreen = "categories" }
                             )
                         }
                         "history" -> {
-
                             ExpensesHistoryScreen(
                                 Modifier.padding(innerPadding),
                                 expenses = expenses,
-                                onBack = { currentScreen = "categories"}
+                                onBack = { currentScreen = "categories" }
                             )
                         }
-
                     }
                 }
             }
         }
     }
 }
-

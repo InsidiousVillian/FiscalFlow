@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // KSP processes Room annotations (@Entity, @Dao, @Database) at compile time
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -48,7 +50,21 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose) // collectAsStateWithLifecycle()
     implementation(libs.coil.compose) // shows receipt photo preview
+
+    // Room: offline SQLite-backed database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx) // suspend + Flow support for DAOs
+    ksp(libs.androidx.room.compiler)       // generates Room implementation classes
+
+    // ViewModel for Compose (survives configuration changes, owns DB access)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
+    // Coroutines (Room ktx suspend/Flow calls run on background dispatcher)
+    implementation(libs.kotlinx.coroutines.android)
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

@@ -24,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -35,16 +34,19 @@ import coil.compose.AsyncImage
 @Composable
 fun CategoryScreen(
     modifier: Modifier = Modifier,
-    categories: SnapshotStateList<String>, // shared with Expense screen
-    expenses: SnapshotStateList<Expense>,  // saved expenses
+    // Data now comes from Room via ViewModel StateFlows — plain read-only Lists are enough.
+    categories: List<String>,
+    expenses: List<Expense>,
     budgetGoal: BudgetingGoal?,
     totalSpent: Double,
     spendingProgress: Float,
+    // Writes go through this callback so the ViewModel can persist into Room; result reports
+    // whether the insert actually happened (false = duplicate name).
+    onAddCategory: (name: String, result: (Boolean) -> Unit) -> Unit,
     onLogout: () -> Unit,
     onAddExpense: () -> Unit,
     onOpenGoals: () -> Unit,
     onViewHistory: () -> Unit
-
 ) {
     var categoryName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -193,19 +195,23 @@ fun CategoryScreen(
 
             Button(
                 onClick = {
-                    if (categoryName.isBlank()) {
-                        errorMessage = "Category name cannot be empty"
-                    } else if (categories.any {
-                            it.equals(
-                                categoryName.trim(),
-                                ignoreCase = true
-                            )
-                        }) {
-                        errorMessage = "Category already exists"
-                    } else {
-                        categories.add(categoryName.trim())
-                        categoryName = ""
-                        errorMessage = null
+                    val trimmed = categoryName.trim()
+                    when {
+                        trimmed.isBlank() -> errorMessage = "Category name cannot be empty"
+                        // Cheap client-side duplicate check so we can show an error immediately;
+                        // the DAO is still the source of truth (PRIMARY KEY on name).
+                        categories.any { it.equals(trimmed, ignoreCase = true) } ->
+                            errorMessage = "Category already exists"
+                        else -> {
+                            onAddCategory(trimmed) { inserted ->
+                                if (inserted) {
+                                    categoryName = ""
+                                    errorMessage = null
+                                } else {
+                                    errorMessage = "Category already exists"
+                                }
+                            }
+                        }
                     }
                 }
             ) {

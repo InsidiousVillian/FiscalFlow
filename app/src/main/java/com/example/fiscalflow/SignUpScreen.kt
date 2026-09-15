@@ -1,26 +1,29 @@
 package com.example.fiscalflow
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
+/**
+ * Sign-up screen. `onSignUp` calls into the ViewModel, which inserts a UserEntity via Room.
+ * The result callback returns false if the username was already taken so we can show an error.
+ */
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    onSignUpSuccess: (String, String) -> Unit,
+    onSignUp: (username: String, password: String, result: (Boolean) -> Unit) -> Unit,
+    onSignUpSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var submitting by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -78,16 +81,29 @@ fun SignUpScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
+            enabled = !submitting,
             onClick = {
                 when {
-                    username.isBlank() || password.isBlank() -> errorMessage = "All fields are required"
-                    password != confirmPassword -> errorMessage = "Passwords do not match"
-                    else -> onSignUpSuccess(username, password)
+                    username.isBlank() || password.isBlank() ->
+                        errorMessage = "All fields are required"
+                    password != confirmPassword ->
+                        errorMessage = "Passwords do not match"
+                    else -> {
+                        submitting = true
+                        onSignUp(username.trim(), password) { success ->
+                            submitting = false
+                            if (success) {
+                                onSignUpSuccess()
+                            } else {
+                                errorMessage = "Username is already taken"
+                            }
+                        }
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Sign Up")
+            Text(if (submitting) "Creating…" else "Sign Up")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
