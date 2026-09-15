@@ -32,17 +32,18 @@ class MainActivity : ComponentActivity() {
                 // userProgress is observed so future screens can show XP/streak; safe to leave unused for now.
                 @Suppress("UNUSED_VARIABLE")
                 val userProgress by vm.userProgress.collectAsStateWithLifecycle()
-
+                //Assign current screen
                 var currentScreen by remember { mutableStateOf("login") }
-
+                //Assign the username
+                var loggedInUsername by remember { mutableStateOf("") }
                 // Derived values recomputed automatically whenever expenses/goal change in the DB.
                 val totalSpent = expenses.sumOf { it.amount }
                 val spendingProgress = budgetGoal?.let {
-                    calculateProgress(totalSpent = totalSpent, maximum = it.maximum)
-                } ?: 0f
+                    calculateProgress(totalSpent = totalSpent, maximum = it.maximum) } ?: 0f
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
+                        //Login screen
                         "login" -> {
                             LoginScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -52,22 +53,63 @@ class MainActivity : ComponentActivity() {
                                         onResult(vm.login(username, password))
                                     }
                                 },
-                                onLoginSuccess = { currentScreen = "categories" },
+                                onLoginSuccess = { currentScreen = "dashboard" },
                                 onNavigateToSignUp = { currentScreen = "signup" }
                             )
                         }
+                        //Sign up screen
                         "signup" -> {
                             SignUpScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 onSignUp = { username, password, onResult ->
+                                    //Create the account on Room
                                     scope.launch {
                                         onResult(vm.signUp(username, password))
                                     }
                                 },
-                                onSignUpSuccess = { currentScreen = "categories" },
+                                //Go to dashboard when signed in
+                                onSignUpSuccess = { currentScreen = "dashboard" },
+                                //Return to login screen
                                 onNavigateToLogin = { currentScreen = "login" }
                             )
                         }
+                        //Dashboard
+                        "dashboard" -> {
+
+                            DashboardScreen(
+
+                                modifier = Modifier.padding(innerPadding),
+
+                                // Send the existing expenses to Dashboard.
+                                expenses = expenses,
+
+                                // Open Transactions.
+                                onTransactionsClick = {
+                                    currentScreen = "expense"
+                                },
+
+                                // Open Budget.
+                                onBudgetClick = {
+                                    currentScreen = "goal"
+                                },
+
+                                // Open Goals.
+                                onGoalsClick = {
+                                    currentScreen = "goal"
+                                },
+
+                                // Open XP & Milestones.
+                                onGamificationClick = {
+                                    currentScreen = "gamification"
+                                },
+
+                                // Open Profile.
+                                onProfileClick = {
+                                    currentScreen = "profile"
+                                }
+                            )
+                        }
+                        //Category screen
                         "categories" -> {
                             CategoryScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -85,6 +127,7 @@ class MainActivity : ComponentActivity() {
                                 onViewHistory = { currentScreen = "history" }
                             )
                         }
+                        //Expense screen
                         "expense" -> {
                             ExpenseScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -96,17 +139,19 @@ class MainActivity : ComponentActivity() {
                                 onBack = { currentScreen = "categories" }
                             )
                         }
+                        //Goal screen
                         "goal" -> {
                             BudgetingScreen(
                                 Modifier.padding(innerPadding),
                                 currentGoal = budgetGoal,
                                 onGoalSaved = { goal ->
                                     vm.saveGoal(goal)
-                                    currentScreen = "categories"
+                                    currentScreen = "dashboard"
                                 },
-                                onBack = { currentScreen = "categories" }
+                                onBack = { currentScreen = "dashboard" }
                             )
                         }
+                        //History screen
                         "history" -> {
                             ExpensesHistoryScreen(
                                 Modifier.padding(innerPadding),
@@ -114,6 +159,21 @@ class MainActivity : ComponentActivity() {
                                 onBack = { currentScreen = "categories" }
                             )
                         }
+                        //Gamified screen
+                        "gamification" -> {
+                            GamificationScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                userProgress = userProgress
+                            )
+                        }
+                        //Profile screen
+                        "profile" -> ProfileScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            username = loggedInUsername,
+                            profileImageUri = null,
+                            onBackToDashboard = { currentScreen = "dashboard" },
+                            onLogout = { currentScreen = "login" }
+                        )
                     }
                 }
             }
