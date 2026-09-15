@@ -70,6 +70,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    // Room in-memory database + kotlinx-coroutines-test for our RoomDatabaseTest suite.
+    // Declared as direct coordinates (not through the version catalog) to keep the diff minimal.
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
