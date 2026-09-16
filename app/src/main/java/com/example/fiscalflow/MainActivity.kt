@@ -36,8 +36,6 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by remember { mutableStateOf("welcome") }
                 var loggedInUsername by remember { mutableStateOf("") }
 
-                var currentScreen by remember { mutableStateOf("welcome") }
-
                 // Derived values recomputed automatically whenever expenses/goal change in the DB.
                 val totalSpent = expenses.sumOf { it.amount }
                 val spendingProgress = budgetGoal?.let {
@@ -47,7 +45,6 @@ class MainActivity : ComponentActivity() {
                     when (currentScreen) {
                         // Welcome screen
                         "welcome" -> {
-                        "welcome" -> {
                             WelcomeScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 onGetStarted = { currentScreen = "signup" },
@@ -55,7 +52,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         // Login screen
-                        "login" -> {
                         "login" -> {
                             LoginScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -93,23 +89,20 @@ class MainActivity : ComponentActivity() {
                         }
                         //Dashboard
                         "dashboard" -> {
-
                             DashboardScreen(
-
                                 modifier = Modifier.padding(innerPadding),
-
                                 // Send the existing expenses to Dashboard.
                                 expenses = expenses,
                                 // Open Transactions.
-                                onTransactionsClick = {currentScreen = "transactions" },
+                                onTransactionsClick = { currentScreen = "transactions" },
                                 // Open Budget.
-                                onBudgetClick = {currentScreen = "budget"},
+                                onBudgetClick = { currentScreen = "budget" },
                                 // Open Goals.
-                                onGoalsClick = {currentScreen = "categories"},
+                                onGoalsClick = { currentScreen = "categories" },
                                 // Open XP & Milestones.
-                                onGamificationClick = {currentScreen = "gamification" },
+                                onGamificationClick = { currentScreen = "gamification" },
                                 // Open Profile.
-                                onProfileClick = {currentScreen = "profile" }
+                                onProfileClick = { currentScreen = "profile" }
                             )
                         }
                         //Transactions screen
@@ -131,24 +124,15 @@ class MainActivity : ComponentActivity() {
                                 budgetGoal = budgetGoal,
                                 totalSpent = totalSpent,
                                 spendingProgress = spendingProgress,
-
-                                onAddCategory = { name, onResult ->vm.addCategory(name, onResult) },
-                                onDeleteCategory = { category ->vm.deleteCategory(category)},
-
+                                onAddCategory = { name, onResult -> vm.addCategory(name, onResult) },
+                                onDeleteCategory = { category -> vm.deleteCategory(category) },
                                 onLogout = {
                                     loggedInUsername = ""
-                                    currentScreen = "login"
+                                    currentScreen = "welcome"
                                 },
-                                onDeleteCategory = { name ->
-                                    vm.deleteCategory(name)
-                                },
-                                onLogout = { currentScreen = "welcome" },
                                 onAddExpense = { currentScreen = "expense" },
                                 onViewHistory = { currentScreen = "history" },
                                 onBackToDashboard = { currentScreen = "dashboard" }
-                                onAddExpense = { currentScreen = "expense" },
-                                onViewHistory = { currentScreen = "history" },
-                                onBackToDashboard  = { currentScreen = "dashboard" }
                             )
                         }
                         //Expense screen

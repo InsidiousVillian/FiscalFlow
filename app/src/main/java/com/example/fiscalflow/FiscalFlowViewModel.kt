@@ -58,8 +58,6 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
             repository.deleteCategory(category)
         }
     }
-        }
-    }
 
     fun addExpense(expense: Expense) {
         viewModelScope.launch { repository.addExpense(expense) }

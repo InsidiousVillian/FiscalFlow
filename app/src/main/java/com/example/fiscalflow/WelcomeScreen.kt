@@ -1,7 +1,6 @@
 package com.example.fiscalflow
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,18 +13,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -91,14 +90,12 @@ fun WelcomeScreen(
                 )
             )
         }
+
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = onGetStarted,
-                modifier = Modifier
-                    .fillMaxWidth()
                 onClick = onGetStarted,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -114,12 +111,9 @@ fun WelcomeScreen(
                     )
                 )
             }
-                )
-            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            TextButton(onClick = onNavigateToLogin) {
             TextButton(onClick = onNavigateToLogin) {
                 Text(
                     text = "Already have an account? Log in",
@@ -127,7 +121,6 @@ fun WelcomeScreen(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
-            }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

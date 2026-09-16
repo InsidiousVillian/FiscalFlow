@@ -199,9 +199,6 @@ fun ExpenseScreen(
                 )
             }
         }
-                )
-            }
-        }
 
         Spacer(modifier = Modifier.height(18.dp))
 
@@ -361,20 +358,6 @@ fun ExpenseScreen(
         ) {
             Button(
                 onClick = onOpenGallery,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Gallery")
-            }
-            Button(
-                onClick = onOpenFile,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("File")
-            }
-        }
-        ) {
-            Button(
-                onClick = onOpenGallery,
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
@@ -447,9 +430,6 @@ fun ExpenseScreen(
                 ),
             contentAlignment = Alignment.Center
         ) {
-                ),
-            contentAlignment = Alignment.Center
-        ) {
             if (photoUri != null) {
                 AsyncImage(
                     model = photoUri,
@@ -468,7 +448,6 @@ fun ExpenseScreen(
                         text = "No receipt image attached yet",
                         fontSize = 14.sp,
                         color = Color.Gray
-                    )
                     )
                 }
             }

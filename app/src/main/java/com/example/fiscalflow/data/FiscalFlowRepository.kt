@@ -69,7 +69,6 @@ class FiscalFlowRepository(
         categoryDao.deleteByName(category)
         Log.d(tag, "deleteCategory('$category') completed")
     }
-    }
 
     suspend fun seedDefaultCategoriesIfEmpty() {
         if (categoryDao.count() == 0) {
