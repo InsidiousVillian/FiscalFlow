@@ -28,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -39,16 +38,20 @@ import coil.compose.AsyncImage
 @Composable
 fun CategoryScreen(
     modifier: Modifier = Modifier,
-    categories: SnapshotStateList<String>, // shared with Expense screen
-    expenses: SnapshotStateList<Expense>,  // saved expenses
+    // Data now comes from Room via ViewModel StateFlows — plain read-only Lists are enough.
+    categories: List<String>,
+    expenses: List<Expense>,
     budgetGoal: BudgetingGoal?,
     totalSpent: Double,
     spendingProgress: Float,
+    // Writes go through this callback so the ViewModel can persist into Room; result reports
+    // whether the insert actually happened (false = duplicate name).
+    onAddCategory: (name: String, result: (Boolean) -> Unit) -> Unit,
+    onDeleteCategory: (name: String) -> Unit,
     onLogout: () -> Unit,
     onAddExpense: () -> Unit,
     onOpenGoals: () -> Unit,
     onViewHistory: () -> Unit
-
 ) {
     var categoryName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -56,13 +59,6 @@ fun CategoryScreen(
     // null = show category list, otherwise show expenses for that category
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp)
-    ) {
-
-    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -96,8 +92,15 @@ fun CategoryScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Monthly Spending",
+                    text = "Budget Goal Progress",
                     style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "This is your spending goal tracker — not the period review.",
+                    style = MaterialTheme.typography.bodySmall
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -142,6 +145,41 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Main actions (kept outside the category list so they only appear once)
+        Button(
+            onClick = onAddExpense,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Add Expense")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = onOpenGoals,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Monthly Goals")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = onViewHistory,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Review Category Totals by Period")
+        }
+
+        Text(
+            text = "Pick This Week, This Month, or a Custom date range",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Category Input Section
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -162,28 +200,29 @@ fun CategoryScreen(
 
             Button(
                 onClick = {
-                    if (categoryName.isBlank()) {
-                        errorMessage = "Category name cannot be empty"
-                    } else if (categories.any {
-                            it.equals(
-                                categoryName.trim(),
-                                ignoreCase = true
-                            )
-                        }) {
-                        errorMessage = "Category already exists"
-                    } else {
-                        categories.add(categoryName.trim())
-                        categoryName = ""
-                        errorMessage = null
+                    val trimmed = categoryName.trim()
+                    when {
+                        trimmed.isBlank() -> errorMessage = "Category name cannot be empty"
+                        // Cheap client-side duplicate check so we can show an error immediately;
+                        // the DAO is still the source of truth (PRIMARY KEY on name).
+                        categories.any { it.equals(trimmed, ignoreCase = true) } ->
+                            errorMessage = "Category already exists"
+                        else -> {
+                            onAddCategory(trimmed) { inserted ->
+                                if (inserted) {
+                                    categoryName = ""
+                                    errorMessage = null
+                                } else {
+                                    errorMessage = "Category already exists"
+                                }
+                            }
+                        }
                     }
                 }
-            )
-            {
+            ) {
                 Text("Add")
             }
-
         }
-
 
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -215,11 +254,14 @@ fun CategoryScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-            .weight(1f),
+                .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
                 val count = expenses.count { it.category == category }
+                val categoryTotal = expenses
+                    .filter { it.category == category }
+                    .sumOf { it.amount }
 
                 Card(
                     modifier = Modifier
@@ -241,15 +283,14 @@ fun CategoryScreen(
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                                 Text(
-                                    text = "$count expense(s)",
+                                    text = "$count expense(s) · R %.2f".format(categoryTotal),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             IconButton(
                                 onClick = {
-                                    expenses.removeAll { it.category == category }
-                                    categories.remove(category)
+                                    onDeleteCategory(category)
                                     if (selectedCategory == category) {
                                         selectedCategory = null
                                     }
@@ -262,24 +303,6 @@ fun CategoryScreen(
                                 )
                             }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(3.dp))
-                    // Opens the Expense screen
-                    Button(
-                        onClick = onAddExpense,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    {
-                        Text("Add Expense")
-                    }
-                    Button(onClick = onOpenGoals)
-                    {
-                        Text("Monthly Goals")
-                    }
-                    Button(onClick = onViewHistory)
-                    {
-                        Text("View expense History")
                     }
                 }
             }

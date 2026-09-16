@@ -26,17 +26,26 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
+/**
+ * Login screen. Instead of holding an in-memory `Map<username, password>`, this now delegates
+ * credential checking to `onLogin`, which asks the Room-backed ViewModel to look up the user.
+ *
+ * `onLogin` is asynchronous (Room DAOs are suspend), so the callback returns its result via
+ * an inner lambda instead of a plain Boolean.
+ */
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
+    onLogin: (username: String, password: String, result: (Boolean) -> Unit) -> Unit,
     onLoginSuccess: () -> Unit = {},
-    onNavigateToSignUp: () -> Unit = {},
-    userAccounts: Map<String, String> = mapOf("admin" to "password123")
+    onNavigateToSignUp: () -> Unit = {}
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    // Disables the button while we're waiting on the DB so users can't double-submit.
+    var loggingIn by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -52,7 +61,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Username Input
         OutlinedTextField(
             value = username,
             onValueChange = {
@@ -70,7 +78,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Password Input
         OutlinedTextField(
             value = password,
             onValueChange = {
@@ -92,7 +99,6 @@ fun LoginScreen(
             }
         )
 
-        // Error Banner
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -104,21 +110,27 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Login Button
         Button(
+            enabled = !loggingIn,
             onClick = {
                 if (username.isBlank() || password.isBlank()) {
                     errorMessage = "Please enter both username and password"
-                } else if (userAccounts[username] == password) {
-                    errorMessage = null
-                    onLoginSuccess()
-                } else {
-                    errorMessage = "Invalid username or password"
+                    return@Button
+                }
+                loggingIn = true
+                onLogin(username.trim(), password) { success ->
+                    loggingIn = false
+                    if (success) {
+                        errorMessage = null
+                        onLoginSuccess()
+                    } else {
+                        errorMessage = "Invalid username or password"
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Log In")
+            Text(if (loggingIn) "Signing in…" else "Log In")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
