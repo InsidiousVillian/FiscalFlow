@@ -1,7 +1,9 @@
 package com.example.fiscalflow
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,9 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
@@ -19,6 +26,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -30,39 +41,45 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
+// Category theme colors
+private val DarkBlue = Color(0xFF172554)
+private val Blue = Color(0xFF3B82F6)
+private val Lavender = Color(0xFFEDE9FE)
+private val Grey = Color(0xFF64748B)
+private val White = Color.White
+
+// Category goals screen for creating categories and tracking category spending
 @Composable
 fun CategoryScreen(
     modifier: Modifier = Modifier,
-    // Data now comes from Room via ViewModel StateFlows — plain read-only Lists are enough.
     categories: List<String>,
     expenses: List<Expense>,
     budgetGoal: BudgetingGoal?,
     totalSpent: Double,
     spendingProgress: Float,
-    // Writes go through this callback so the ViewModel can persist into Room; result reports
-    // whether the insert actually happened (false = duplicate name).
     onAddCategory: (name: String, result: (Boolean) -> Unit) -> Unit,
     onDeleteCategory: (name: String) -> Unit,
     onLogout: () -> Unit,
     onAddExpense: () -> Unit,
-    onOpenGoals: () -> Unit,
-    onViewHistory: () -> Unit
+    onViewHistory: () -> Unit,
+    onBackToDashboard: () -> Unit
 ) {
     var categoryName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // null = show category list, otherwise show expenses for that category
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(20.dp)
     ) {
 
         Row(
@@ -71,116 +88,138 @@ fun CategoryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Budget Categories",
-                style = MaterialTheme.typography.headlineMedium
+                text = "Category Goals",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkBlue
             )
+
             TextButton(onClick = onLogout) {
-                Text("Log Out")
+                Text(
+                    "Log Out",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Blue
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Monthly Spending Progress
+        // Spending progress summary card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            colors = CardDefaults.cardColors(containerColor = DarkBlue),
+            shape = RoundedCornerShape(20.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            Column(modifier = Modifier.padding(18.dp)) {
                 Text(
                     text = "Budget Goal Progress",
-                    style = MaterialTheme.typography.titleMedium
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = White
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(5.dp))
 
                 Text(
                     text = "This is your spending goal tracker — not the period review.",
-                    style = MaterialTheme.typography.bodySmall
+                    fontSize = 14.sp,
+                    color = Lavender
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "R%.2f / R%.2f".format(
                         totalSpent,
                         budgetGoal?.maximum ?: 0.0
                     ),
-                    style = MaterialTheme.typography.titleLarge
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = White
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                androidx.compose.material3.LinearProgressIndicator(
+                LinearProgressIndicator(
                     progress = { spendingProgress },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Blue,
+                    trackColor = Lavender
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(9.dp))
 
                 budgetGoal?.let { goal ->
-
                     val message = when {
-                        totalSpent < goal.minimum ->
-                            "🎯 You're below your minimum spending goal."
-
-                        totalSpent <= goal.maximum ->
-                            "⭐ Great! You're within your spending goal."
-
-                        else ->
-                            "⚠️ You've exceeded your maximum goal."
+                        totalSpent < goal.minimum -> "🎯 You're below your minimum spending goal."
+                        totalSpent <= goal.maximum -> "⭐ Great! You're within your spending goal."
+                        else -> "⚠️ You've exceeded your maximum goal."
                     }
 
                     Text(
                         text = message,
-                        style = MaterialTheme.typography.bodyMedium
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = White
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Main actions (kept outside the category list so they only appear once)
         Button(
             onClick = onAddExpense,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("Add Expense")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = onOpenGoals,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Monthly Goals")
+            Text("Add Expense", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = onViewHistory,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("Review Category Totals by Period")
+            Text(
+                "Review Category Totals by Period",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = onBackToDashboard,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text("← Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Pick This Week, This Month, or a Custom date range",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.sp,
+            color = Grey,
             modifier = Modifier.padding(top = 4.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Category Input Section
+        // New category input row
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -191,9 +230,10 @@ fun CategoryScreen(
                     categoryName = it
                     errorMessage = null
                 },
-                label = { Text("New Category") },
+                label = { Text("New Category", fontSize = 15.sp) },
                 singleLine = true,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(14.dp)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -203,8 +243,6 @@ fun CategoryScreen(
                     val trimmed = categoryName.trim()
                     when {
                         trimmed.isBlank() -> errorMessage = "Category name cannot be empty"
-                        // Cheap client-side duplicate check so we can show an error immediately;
-                        // the DAO is still the source of truth (PRIMARY KEY on name).
                         categories.any { it.equals(trimmed, ignoreCase = true) } ->
                             errorMessage = "Category already exists"
                         else -> {
@@ -218,9 +256,11 @@ fun CategoryScreen(
                             }
                         }
                     }
-                }
+                },
+                modifier = Modifier.height(50.dp),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Add")
+                Text("Add", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -229,28 +269,30 @@ fun CategoryScreen(
             Text(
                 text = errorMessage.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                fontSize = 14.sp
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         Text(
             text = "Your Categories",
-            style = MaterialTheme.typography.titleMedium
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = DarkBlue
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         Text(
             text = "Tap a category to view its expenses",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            fontSize = 14.sp,
+            color = Grey
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Display Category List
+        // Category list
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -258,122 +300,140 @@ fun CategoryScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
-                val count = expenses.count { it.category == category }
-                val categoryTotal = expenses
-                    .filter { it.category == category }
-                    .sumOf { it.amount }
+                val categoryExpenses = expenses.filter { it.category == category }
+                val count = categoryExpenses.size
+                val categoryTotal = categoryExpenses.sumOf { it.amount }
+                val latestExpenseWithPhoto = categoryExpenses.lastOrNull { !it.photoUri.isNullOrBlank() }
+
+                val categoryIcon = when (category.lowercase()) {
+                    "groceries" -> "🛒"
+                    "rent" -> "🏠"
+                    "utilities" -> "⚡"
+                    "food" -> "🍕"
+                    "healthcare", "medical" -> "🩺"
+                    "travel" -> "✈️"
+                    "entertainment", "movies" -> "🎬"
+                    "education", "books" -> "📚"
+                    "savings" -> "🐷"
+                    "transport" -> "🚗"
+                    "shopping", "clothing" -> "👕"
+                    else -> "🎯"
+                }
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { selectedCategory = category },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    colors = CardDefaults.cardColors(containerColor = White),
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = CardDefaults.cardElevation(3.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Lavender),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = category,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Text(
-                                    text = "$count expense(s) · R %.2f".format(categoryTotal),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    onDeleteCategory(category)
-                                    if (selectedCategory == category) {
-                                        selectedCategory = null
-                                    }
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = "$count expense(s) · R %.2f".format(categoryTotal),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                onDeleteCategory(category)
+                                if (selectedCategory == category) {
+                                    selectedCategory = null
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete $category category",
-                                    tint = MaterialTheme.colorScheme.error
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete $category category",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                        ) {
+                            if (latestExpenseWithPhoto?.photoUri != null) {
+                                AsyncImage(
+                                    model = latestExpenseWithPhoto.photoUri,
+                                    contentDescription = category,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Text(
+                                    text = categoryIcon,
+                                    fontSize = 25.sp
                                 )
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
 
-    // Shows expenses saved under one category
-    @Composable
-    fun CategoryExpensesView(
-        modifier: Modifier = Modifier,
-        categoryName: String,
-        expenses: List<Expense>,
-        onBack: () -> Unit
-    ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = categoryName,
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                TextButton(onClick = onBack) {
-                    Text("Back")
-                }
-            }
+                        Spacer(modifier = Modifier.width(12.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (expenses.isEmpty()) {
-                Text(
-                    text = "No expenses in this category yet.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(expenses) { expense ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "$categoryIcon $category",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DarkBlue
                             )
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = "Amount: R${expense.amount}",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(text = "Description: ${expense.description}")
-                                Text(text = "Start date: ${expense.startDate}")
-                                Text(text = "End date: ${expense.endDate}")
 
-                                if (!expense.photoUri.isNullOrBlank()) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    AsyncImage(
-                                        model = expense.photoUri.toUri(),
-                                        contentDescription = "Expense receipt",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(160.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = "$count expense(s)",
+                                fontSize = 14.sp,
+                                color = Grey
+                            )
+
+                            Spacer(modifier = Modifier.height(3.dp))
+
+                            Text(
+                                text = "R %.2f spent".format(categoryTotal),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Blue
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                onDeleteCategory(category)
+                                if (selectedCategory == category) {
+                                    selectedCategory = null
                                 }
                             }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete $category category",
+                                tint = MaterialTheme.colorScheme.error
+                            )
                         }
                     }
                 }

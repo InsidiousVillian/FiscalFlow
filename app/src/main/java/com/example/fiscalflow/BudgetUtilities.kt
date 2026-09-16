@@ -1,15 +1,14 @@
 package com.example.fiscalflow
 
-//Calculate how much of the maximum budget has been spent
-
+// Calculates how much of the max budget limit has been spent so far
 fun calculateProgress(
     totalSpent: Double,
     maximum: Double
 ): Float {
-    //Prevent any form of division when there is no maximum budget
+    // Avoid dividing by zero if no budget target is set
     if (maximum <= 0) return 0f
 
-    //Calculates the spending percentage
+    // Return capped spending ratio between 0.0 and 1.0
     return (totalSpent / maximum)
         .coerceIn(0.0, 1.0)
         .toFloat()

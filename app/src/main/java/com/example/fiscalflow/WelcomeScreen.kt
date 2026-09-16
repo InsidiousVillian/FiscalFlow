@@ -1,17 +1,39 @@
 package com.example.fiscalflow
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Theme colors
+private val WelcomeDarkBlue = Color(0xFF172A46)
+private val WelcomeLavender = Color(0xFFEDEBFA)
+
+// Welcome screen introducing FiscalFlow and directing user to sign up or log in
 @Composable
 fun WelcomeScreen(
     modifier: Modifier = Modifier,
@@ -21,6 +43,7 @@ fun WelcomeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(WelcomeLavender)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -31,10 +54,12 @@ fun WelcomeScreen(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(80.dp)
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(WelcomeDarkBlue),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.TrendingUp,
@@ -46,33 +71,26 @@ fun WelcomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Fiscal Flow",
+                text = "FiscalFlow",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = WelcomeDarkBlue
                 )
             )
 
+            Spacer(modifier = Modifier.height(6.dp))
+
             Text(
-                text = "Plan. Track. Achieve",
+                text = "Plan. Track. Achieve.",
                 style = MaterialTheme.typography.titleMedium.copy(
-                    color = MaterialTheme.colorScheme.secondary
+                    fontWeight = FontWeight.Bold,
+                    color = WelcomeDarkBlue
                 )
             )
         }
-
-        // Subtitle Phrase
-        Text(
-            text = "Take control of your money and\nreach your goals",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            lineHeight = 24.sp
-        )
-
-        // Action Buttons
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -81,18 +99,35 @@ fun WelcomeScreen(
                 onClick = onGetStarted,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp)
+                onClick = onGetStarted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = WelcomeDarkBlue)
             ) {
                 Text(
                     text = "GET STARTED",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                )
+            }
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             TextButton(onClick = onNavigateToLogin) {
-                Text("Already have an account? Log in")
+            TextButton(onClick = onNavigateToLogin) {
+                Text(
+                    text = "Already have an account? Log in",
+                    color = WelcomeDarkBlue,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

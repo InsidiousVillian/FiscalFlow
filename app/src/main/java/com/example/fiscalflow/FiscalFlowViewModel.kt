@@ -12,29 +12,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel exposed to Compose. Owns the repository and turns the DAO Flows into StateFlows
- * so screens can just call `collectAsState()` to render the latest data.
- *
- * All write operations are launched on viewModelScope, which is cancelled automatically when
- * the ViewModel is cleared. That means no leaks even if the user rotates the device mid-save.
- */
+// ViewModel exposing room database data as StateFlows to the UI components.
 class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repository: FiscalFlowRepository =
         (app as FiscalFlowApp).repository
 
     init {
-        // Seed defaults once, on first launch, so the login screen and category list aren't empty.
+        // Populate default account & categories if database is brand new
         viewModelScope.launch {
             repository.seedDefaultUserIfEmpty()
             repository.seedDefaultCategoriesIfEmpty()
         }
     }
 
-    // stateIn converts a cold Flow (only runs while collected) into a hot StateFlow with a
-    // cached "latest" value. SharingStarted.WhileSubscribed(5000) keeps the DB query alive for
-    // 5 seconds after the last collector goes away — cheap way to survive quick config changes.
+    // Keep database flows warm while UI is active
     val categories: StateFlow<List<String>> = repository.categories
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -47,13 +39,11 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
     val userProgress: StateFlow<UsersProgress> = repository.userProgress
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UsersProgress())
 
-    // ---------- Actions the UI calls ----------
+    // Actions called by UI screens
 
-    /** Returns true on success, false if the credentials do not match a stored user. */
     suspend fun login(username: String, password: String): Boolean =
         repository.authenticate(username, password)
 
-    /** Returns true on success, false if the username is already taken. */
     suspend fun signUp(username: String, password: String): Boolean =
         repository.registerUser(username, password)
 
@@ -63,9 +53,11 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun deleteCategory(name: String) {
+    fun deleteCategory(category: String) {
         viewModelScope.launch {
-            repository.deleteCategory(name)
+            repository.deleteCategory(category)
+        }
+    }
         }
     }
 
@@ -76,17 +68,13 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
     fun saveGoal(goal: BudgetingGoal) {
         viewModelScope.launch {
             repository.saveGoal(goal)
-            // Award XP for setting a goal — same behaviour that MainActivity had inline before.
+            // Reward 10 XP whenever a new target budget is saved
             val current = userProgress.value
             repository.saveProgress(current.copy(xp = current.xp + 10))
         }
     }
 
     companion object {
-        /**
-         * Custom factory so we can pass the Application to the AndroidViewModel constructor.
-         * Compose picks this up automatically via `viewModel(factory = FiscalFlowViewModel.Factory)`.
-         */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]

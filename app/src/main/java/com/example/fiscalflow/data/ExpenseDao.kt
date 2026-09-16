@@ -7,10 +7,11 @@ import androidx.room.Query
 import com.example.fiscalflow.Expense
 import kotlinx.coroutines.flow.Flow
 
+// Database queries for managing expense records
 @Dao
 interface ExpenseDao {
 
-    // Ordered by id DESC so the newest expense appears first in history lists.
+    // Fetch all expenses with newest entries first
     @Query("SELECT * FROM expenses ORDER BY id DESC")
     fun observeAll(): Flow<List<Expense>>
 
@@ -20,6 +21,6 @@ interface ExpenseDao {
     @Delete
     suspend fun delete(expense: Expense)
 
-    @Query("DELETE FROM expenses WHERE category = :category")
-    suspend fun deleteByCategory(category: String)
+    @Query("DELETE FROM expenses WHERE category = :categoryName")
+    suspend fun deleteByCategory(categoryName: String)
 }

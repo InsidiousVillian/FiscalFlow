@@ -1,7 +1,9 @@
 package com.example.fiscalflow
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -22,13 +24,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,47 +48,71 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.example.fiscalflow.R
 import java.util.Calendar
 
+// Screen for creating expenses or income entries, picking dates, categories, and attaching receipt images
 @Composable
 fun ExpenseScreen(
     modifier: Modifier = Modifier,
-    categories: List<String>,                 // categories loaded from Room via ViewModel
-    onExpenseSaved: (Expense) -> Unit = {},   // called after save
-    onBack: () -> Unit = {}                   // goes back
+    categories: List<String>,
+    initialIsIncome: Boolean = false,
+    initialPhotoUri: String? = null,
+    initialPhotoName: String? = null,
+    onOpenGallery: () -> Unit = {},
+    onExpenseSaved: (Expense) -> Unit = {},
+    onBack: () -> Unit = {}
 ) {
     val today = remember { Calendar.getInstance() }
     val currentYear = today.get(Calendar.YEAR)
 
-    // Form fields
+    // Toggle state: false = Expense, true = Income
+    var isIncomeType by remember(initialIsIncome) { mutableStateOf(initialIsIncome) }
+
+    // Form field states
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    // Start date
+    // Start date picker state
     var startDay by remember { mutableIntStateOf(today.get(Calendar.DAY_OF_MONTH)) }
     var startMonth by remember { mutableIntStateOf(today.get(Calendar.MONTH)) }
     var startYear by remember { mutableIntStateOf(currentYear) }
 
-    // End date
+    // End date picker state
     var endDay by remember { mutableIntStateOf(today.get(Calendar.DAY_OF_MONTH)) }
     var endMonth by remember { mutableIntStateOf(today.get(Calendar.MONTH)) }
     var endYear by remember { mutableIntStateOf(currentYear) }
 
-    // Category chosen for this expense
-    var selectedCategory by remember {
-        mutableStateOf(categories.firstOrNull().orEmpty())
+    // Default categories depending on Expense or Income mode
+    val incomeCategories = remember { listOf("Salary", "Freelance", "Investment", "Business", "Gift", "General Income") }
+    val activeCategories = if (isIncomeType) incomeCategories else categories
+
+    var selectedCategory by remember(isIncomeType) {
+        mutableStateOf(activeCategories.firstOrNull().orEmpty())
     }
+
     var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedImageName by remember { mutableStateOf<String?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Sync image from gallery selection if passed from MainActivity
+    LaunchedEffect(initialPhotoUri, initialPhotoName) {
+        if (!initialPhotoUri.isNullOrBlank()) {
+            photoUri = initialPhotoUri.toUri()
+            selectedImageName = initialPhotoName ?: "Gallery Image"
+        }
+    }
+
     val categoryValue = when {
-        categories.isEmpty() -> ""
-        selectedCategory in categories -> selectedCategory
-        else -> categories.first()
+        activeCategories.isEmpty() -> ""
+        selectedCategory in activeCategories -> selectedCategory
+        else -> activeCategories.first()
     }
 
     val months = remember {
@@ -119,7 +150,7 @@ fun ExpenseScreen(
     }
     val context = LocalContext.current
 
-    // Opens file picker for images (works better on emulator than GetContent alone)
+    // Opens system file picker for selecting a receipt image
     val pickImage = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -133,58 +164,111 @@ fun ExpenseScreen(
                 // Still try to preview even if persist fails
             }
             photoUri = uri
+            selectedImageName = getUriFileName(context, uri)
         }
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(Color(0xFFEDEBFA))
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(20.dp),
         verticalArrangement = Arrangement.Top
     ) {
-        // Blue header block
+        // Screen Header Box
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFF1976D2))
-                .padding(horizontal = 16.dp, vertical = 20.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (isIncomeType) Color(0xFF15803D) else Color(0xFF172A46))
+                .padding(horizontal = 20.dp, vertical = 22.dp)
         ) {
             Column {
                 Text(
-                    text = "Add Expense",
-                    style = MaterialTheme.typography.headlineMedium,
+                    text = if (isIncomeType) "Add Income Entry" else "Add Expense Entry",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Fill in details and attach a receipt if you have one",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFE3F2FD)
+                    text = if (isIncomeType) "Record new earnings in Rands" else "Log spending and attach receipt image",
+                    fontSize = 15.sp,
+                    color = Color.White.copy(alpha = 0.85f)
+                )
+            }
+        }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-        // Amount input
+        // TRANSACTION TYPE SELECTOR (EXPENSE vs INCOME)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Button(
+                onClick = { isIncomeType = false },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (!isIncomeType) Color(0xFFE57373) else Color.White
+                )
+            ) {
+                Text(
+                    text = "↓ Expense",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (!isIncomeType) Color.White else Color(0xFF172A46)
+                )
+            }
+
+            Button(
+                onClick = { isIncomeType = true },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isIncomeType) Color(0xFF4CAF50) else Color.White
+                )
+            ) {
+                Text(
+                    text = "↑ Income",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isIncomeType) Color.White else Color(0xFF172A46)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        // Expense / Income Amount Input
         OutlinedTextField(
             value = amount,
             onValueChange = {
                 amount = it
                 errorMessage = null
             },
-            label = { Text("Amount") },
+            label = { Text("Amount in Rands (R)", fontSize = 15.sp) },
+            placeholder = { Text("e.g. 250.00", fontSize = 15.sp) },
+            prefix = { Text("R ", fontSize = 16.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Start date
+        // Start date roller
         DateRollerRow(
-            title = "Start date",
+            title = "Start Date",
             selectedDay = startDay,
             selectedMonth = startMonth,
             selectedYear = startYear,
@@ -206,11 +290,11 @@ fun ExpenseScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // End date
+        // End date roller
         DateRollerRow(
-            title = "End date",
+            title = "End Date",
             selectedDay = endDay,
             selectedMonth = endMonth,
             selectedYear = endYear,
@@ -227,12 +311,12 @@ fun ExpenseScreen(
             },
             onYearSelected = { year ->
                 endYear = year
-                endDay = endDay.coerceAtMost(daysInMonth(endMonth, year))
+                endDay = endDay.coerceAtMost(daysInMonth(startMonth, year))
                 errorMessage = null
             }
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Description input
         OutlinedTextField(
@@ -241,84 +325,168 @@ fun ExpenseScreen(
                 description = it
                 errorMessage = null
             },
-            label = { Text("Description") },
+            label = { Text("Description", fontSize = 15.sp) },
+            placeholder = { Text("e.g. Monthly salary, Grocery run", fontSize = 14.sp) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Category dropdown (same categories as Category screen)
+        // Category dropdown
         SimpleDropdown(
             label = "Category",
             value = categoryValue,
-            options = categories.toList(),
+            options = activeCategories,
             modifier = Modifier.fillMaxWidth(),
             onOptionSelected = { selectedCategory = it }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Attach photo button
-        Button(
-            onClick = { pickImage.launch(arrayOf("image/*")) },
-            modifier = Modifier.fillMaxWidth()
+        // ATTACH RECEIPT PHOTO SECTION
+        Text(
+            text = "Attach Receipt / Document Image",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF172A46)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Gallery & File options row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("Attach photo")
+            Button(
+                onClick = onOpenGallery,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Gallery")
+            }
+            Button(
+                onClick = onOpenFile,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("File")
+            }
+        }
+        ) {
+            Button(
+                onClick = onOpenGallery,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF172A46))
+            ) {
+                Text("🖼️ Sample Gallery", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+
+            OutlinedButton(
+                onClick = { pickImage.launch(arrayOf("image/*")) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("📁 Device Files", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Receipt preview box (placeholder drawable when empty)
+        // DISPLAY SELECTED FILE NAME & PREVIEW BOX
+        if (selectedImageName != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📎 Attached: $selectedImageName",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2E7D32),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    TextButton(
+                        onClick = {
+                            photoUri = null
+                            selectedImageName = null
+                        }
+                    ) {
+                        Text("Remove", color = Color.Red, fontSize = 14.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
+        // Receipt Image Preview Box
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                .height(200.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color.White)
                 .border(
                     width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp)
+                    color = Color(0xFFCBD5E1),
+                    shape = RoundedCornerShape(14.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
                 ),
             contentAlignment = Alignment.Center
         ) {
             if (photoUri != null) {
                 AsyncImage(
                     model = photoUri,
-                    contentDescription = "Receipt preview",
+                    contentDescription = selectedImageName ?: "Receipt image preview",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_receipt_placeholder),
-                        contentDescription = "Receipt placeholder",
-                        modifier = Modifier.height(72.dp)
+                    Text(
+                        text = "📷",
+                        fontSize = 36.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "No receipt attached yet",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "No receipt image attached yet",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
                     )
                 }
             }
         }
 
         if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = errorMessage.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Save expense button
+        // Save Transaction Button (Expense or Income)
         Button(
             onClick = {
                 val parsedAmount = amount.toDoubleOrNull()
@@ -334,7 +502,7 @@ fun ExpenseScreen(
                     return@Button
                 }
                 if (parsedAmount == null || parsedAmount <= 0.0) {
-                    errorMessage = "Enter a valid amount"
+                    errorMessage = "Enter a valid amount in Rands"
                     return@Button
                 }
 
@@ -357,23 +525,60 @@ fun ExpenseScreen(
                     endDate = endDateText,
                     description = description.trim(),
                     category = categoryValue,
-                    photoUri = photoUri?.toString()
+                    photoUri = photoUri?.toString(),
+                    isIncome = isIncomeType
                 )
 
-                // Save then return to categories (handled in MainActivity)
                 onExpenseSaved(expense)
             },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isIncomeType) Color(0xFF15803D) else Color(0xFF172A46)
+            )
+        ) {
+            Text(
+                text = if (isIncomeType) "Save Income Entry" else "Save Expense Entry",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        TextButton(
+            onClick = onBack,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Save Expense")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextButton(onClick = onBack) {
-            Text("Back")
+            Text("Cancel & Return", fontSize = 15.sp)
         }
     }
+}
+
+private fun getUriFileName(context: Context, uri: Uri): String {
+    if (uri.scheme == "content") {
+        try {
+            context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex != -1) {
+                        val name = cursor.getString(nameIndex)
+                        if (!name.isNullOrBlank()) return name
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            // Ignore query exception
+        }
+    }
+    val lastSegment = uri.lastPathSegment?.substringAfterLast('/')
+    if (!lastSegment.isNullOrBlank()) {
+        return lastSegment
+    }
+    return "receipt_image.jpg"
 }
 
 private fun daysInMonth(month: Int, year: Int): Int {
@@ -403,7 +608,9 @@ private fun DateRollerRow(
 
     Text(
         text = title,
-        style = MaterialTheme.typography.titleSmall
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFF172A46)
     )
 
     Spacer(modifier = Modifier.height(8.dp))
@@ -454,7 +661,7 @@ private fun SimpleDropdown(
             onValueChange = {},
             readOnly = true,
             singleLine = true,
-            label = { Text(label) },
+            label = { Text(label, fontSize = 14.sp) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -470,7 +677,7 @@ private fun SimpleDropdown(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option) },
+                    text = { Text(option, fontSize = 15.sp) },
                     onClick = {
                         onOptionSelected(option)
                         expanded = false

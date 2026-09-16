@@ -7,6 +7,7 @@ import androidx.room.Query
 import com.example.fiscalflow.UsersProgress
 import kotlinx.coroutines.flow.Flow
 
+// Database operations for user gamification stats
 @Dao
 interface UserProgressDao {
 
