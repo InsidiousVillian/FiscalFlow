@@ -53,7 +53,9 @@ class MainActivity : ComponentActivity() {
                                         onResult(vm.login(username, password))
                                     }
                                 },
-                                onLoginSuccess = { currentScreen  = "dashboard"
+                                onLoginSuccess = { username ->
+                                    loggedInUsername = username
+                                    currentScreen = "dashboard"
                                 },
                                 onNavigateToSignUp = { currentScreen = "signup" }
                             )
@@ -69,7 +71,10 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 //Go to dashboard when signed in
-                                onSignUpSuccess = { currentScreen = "dashboard" },
+                                onSignUpSuccess = { username ->
+                                    loggedInUsername = username
+                                    currentScreen = "dashboard"
+                                },
                                 //Return to log in screen
                                 onNavigateToLogin = { currentScreen = "login" }
                             )
@@ -83,31 +88,26 @@ class MainActivity : ComponentActivity() {
 
                                 // Send the existing expenses to Dashboard.
                                 expenses = expenses,
-
                                 // Open Transactions.
-                                onTransactionsClick = {
-                                    currentScreen = "expense"
-                                },
-
+                                onTransactionsClick = {currentScreen = "transactions" },
                                 // Open Budget.
-                                onBudgetClick = {
-                                    currentScreen = "budget"
-                                },
-
+                                onBudgetClick = {currentScreen = "budget"},
                                 // Open Goals.
-                                onGoalsClick = {
-                                    currentScreen = "categories"
-                                },
-
+                                onGoalsClick = {currentScreen = "categories"},
                                 // Open XP & Milestones.
-                                onGamificationClick = {
-                                    currentScreen = "gamification"
-                                },
-
+                                onGamificationClick = {currentScreen = "gamification" },
                                 // Open Profile.
-                                onProfileClick = {
-                                    currentScreen = "profile"
-                                }
+                                onProfileClick = {currentScreen = "profile" }
+                            )
+                        }
+                        //Transactions screen
+                        "transactions" -> {
+                            TransactionsScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                expenses = expenses,
+                                categories = categories,
+                                onAddExpense = { currentScreen = "expense" },
+                                onBackToDashboard = { currentScreen = "dashboard" }
                             )
                         }
                         //Category screen
@@ -120,15 +120,13 @@ class MainActivity : ComponentActivity() {
                                 totalSpent = totalSpent,
                                 spendingProgress = spendingProgress,
 
-                                onAddCategory = { name, onResult ->
-                                    vm.addCategory(name, onResult)
-                                },
+                                onAddCategory = { name, onResult ->vm.addCategory(name, onResult) },
+                                onDeleteCategory = { category ->vm.deleteCategory(category)},
 
-                                onDeleteCategory = { category ->
-                                    vm.deleteCategory(category)
+                                onLogout = {
+                                    loggedInUsername = ""
+                                    currentScreen = "login"
                                 },
-
-                                onLogout = { currentScreen = "login" },
                                 onAddExpense = { currentScreen = "expense" },
                                 onViewHistory = { currentScreen = "history" },
                                 onBackToDashboard  = { currentScreen = "dashboard" }
@@ -141,9 +139,8 @@ class MainActivity : ComponentActivity() {
                                 categories = categories,
                                 onExpenseSaved = { expense ->
                                     vm.addExpense(expense)
-                                    currentScreen = "categories"
-                                },
-                                onBack = { currentScreen = "categories" }
+                                    currentScreen = "transactions"},
+                                onBack = { currentScreen = "transactions" }
                             )
                         }
                         //Budget screen
@@ -152,12 +149,8 @@ class MainActivity : ComponentActivity() {
                             currentGoal = budgetGoal,
                             totalSpent = totalSpent,
                             currentStreak = userProgress.streak,
-                            onGoalSaved = { goal ->
-                                vm.saveGoal(goal)
-                            },
-                            onBack = {
-                                currentScreen = "dashboard"
-                            }
+                            onGoalSaved = { goal ->vm.saveGoal(goal)},
+                            onBack = {currentScreen = "dashboard"}
                         )
                         //History screen
                         "history" -> {
@@ -171,25 +164,20 @@ class MainActivity : ComponentActivity() {
                         "gamification" -> {
                             GamificationScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                userProgress = userProgress
+                                userProgress = userProgress,
+                                onBackToDashboard = {currentScreen = "dashboard"}
                             )
                         }
                         //Profile screen
                         "profile" -> {
                             ProfileScreen(
                                 modifier = Modifier.padding(innerPadding),
-
                                 // Send the username of the currently logged-in user
                                 username = loggedInUsername,
-
                                 // No profile image is currently connected
                                 profileImageUri = null,
-
                                 // Return to dashboard
-                                onBackToDashboard = {
-                                    currentScreen = "dashboard"
-                                },
-
+                                onBackToDashboard = {currentScreen = "dashboard" },
                                 // Log out
                                 onLogout = {
                                     loggedInUsername = ""

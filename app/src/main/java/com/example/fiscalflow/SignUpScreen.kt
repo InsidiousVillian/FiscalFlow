@@ -8,15 +8,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
-/**
- * Sign-up screen. `onSignUp` calls into the ViewModel, which inserts a UserEntity via Room.
- * The result callback returns false if the username was already taken so we can show an error.
- */
+// Sign-up screen allowing users to register a new account.
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
     onSignUp: (username: String, password: String, result: (Boolean) -> Unit) -> Unit,
-    onSignUpSuccess: () -> Unit,
+    onSignUpSuccess: (String) -> Unit = {},
     onNavigateToLogin: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
@@ -93,7 +90,7 @@ fun SignUpScreen(
                         onSignUp(username.trim(), password) { success ->
                             submitting = false
                             if (success) {
-                                onSignUpSuccess()
+                                onSignUpSuccess(username.trim())
                             } else {
                                 errorMessage = "Username is already taken"
                             }

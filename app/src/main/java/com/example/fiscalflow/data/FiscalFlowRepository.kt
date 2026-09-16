@@ -9,14 +9,7 @@ import com.example.fiscalflow.UsersProgress
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/**
- * Repository sits between the ViewModel and the DAOs.
- *
- * Two benefits for this project:
- *   1. The ViewModel never needs to know Room exists — swap the backend later without changing UI.
- *   2. We can add cross-cutting concerns here (logging, seeding defaults, mapping entities to
- *      simpler UI types) in one place.
- */
+// Repository managing data flow between Room DAOs and the ViewModel.
 class FiscalFlowRepository(
     private val userDao: UserDao,
     private val categoryDao: CategoryDao,
@@ -27,10 +20,10 @@ class FiscalFlowRepository(
 
     private val tag = "FiscalFlowRepo"
 
-    // ---------- Users ----------
+    // User management
 
     suspend fun registerUser(username: String, password: String): Boolean {
-        // Return false if the username is already taken so SignUpScreen can show an error.
+        // Prevent registering matching duplicate usernames
         val existing = userDao.findByUsername(username)
         if (existing != null) {
             Log.w(tag, "registerUser: username '$username' already exists")
@@ -48,39 +41,32 @@ class FiscalFlowRepository(
         return ok
     }
 
-    /** Seeds a default admin account the first time the app runs so testers can log in immediately. */
+    // Seed default admin account on first app launch
     suspend fun seedDefaultUserIfEmpty() {
         if (userDao.count() == 0) {
             userDao.insert(UserEntity(username = "admin", password = "password123"))
-            Log.i(tag, "Seeded default admin/password123 account")
+            Log.i(tag, "Seeded default admin account")
         }
     }
 
-    // ---------- Categories ----------
+    // Categories
 
-    // Flow<List<String>> is what the UI actually wants (screens don't care about the entity type).
     val categories: Flow<List<String>> =
         categoryDao.observeAll().map { rows -> rows.map { it.name } }
 
     suspend fun addCategory(name: String): Boolean {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return false
-        // insert() returns -1L when OnConflictStrategy.IGNORE dropped a duplicate row.
         val rowId = categoryDao.insert(CategoryEntity(name = trimmed))
         val inserted = rowId != -1L
         Log.d(tag, "addCategory('$trimmed') inserted=$inserted")
         return inserted
     }
 
-    // Delete a category and all expenses saved under it
+    // Remove category along with any associated expenses
     suspend fun deleteCategory(category: String) {
-
-        // Delete the expenses belonging to this category first
         expenseDao.deleteByCategory(category)
-
-        // Then delete the category itself
         categoryDao.deleteByName(category)
-
         Log.d(tag, "deleteCategory('$category') completed")
     }
 
@@ -93,30 +79,27 @@ class FiscalFlowRepository(
         }
     }
 
-    // ---------- Expenses ----------
+    // Expenses
 
     val expenses: Flow<List<Expense>> = expenseDao.observeAll()
 
     suspend fun addExpense(expense: Expense) {
-        // Ensure the auto-generated id is used by passing id = 0 (the entity default).
         val toInsert = if (expense.id == 0L) expense else expense.copy(id = 0)
         val newId = expenseDao.insert(toInsert)
         Log.d(tag, "addExpense saved id=$newId amount=${expense.amount} category=${expense.category}")
     }
 
-    // ---------- Budget goal ----------
+    // Budget goal
 
     val budgetGoal: Flow<BudgetingGoal?> = budgetGoalDao.observeCurrent()
 
     suspend fun saveGoal(goal: BudgetingGoal) {
-        // Always upsert into the single-row id so we overwrite the previous month's goal.
         budgetGoalDao.upsert(goal.copy(id = BudgetingGoal.SINGLE_ROW_ID))
         Log.d(tag, "saveGoal min=${goal.minimum} max=${goal.maximum}")
     }
 
-    // ---------- User progress ----------
+    // User progress tracking
 
-    // Downstream code prefers a non-null value, so we fall back to the default when the row is missing.
     val userProgress: Flow<UsersProgress> =
         userProgressDao.observeCurrent().map { it ?: UsersProgress() }
 

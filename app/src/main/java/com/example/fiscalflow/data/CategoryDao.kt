@@ -7,20 +7,17 @@ import androidx.room.Query
 import com.example.fiscalflow.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
+// Database operations for spending categories
 @Dao
 interface CategoryDao {
 
-    // Flow<T> from Room emits a new list every time the underlying table changes.
-    // The UI collects this Flow so category cards update automatically after inserts/deletes.
+    // Emits live updates whenever category records change
     @Query("SELECT * FROM categories ORDER BY name COLLATE NOCASE ASC")
     fun observeAll(): Flow<List<CategoryEntity>>
 
-    // IGNORE means "if this category name already exists, do nothing" — SQLite enforces uniqueness
-    // via the primary key on `name`, so this doubles as the "no duplicate categories" rule.
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(category: CategoryEntity): Long
 
-    // Deletes a category using its name
     @Query("DELETE FROM categories WHERE name = :categoryName")
     suspend fun deleteByName(categoryName: String)
 

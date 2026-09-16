@@ -26,13 +26,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
-/**
- * Login screen. Instead of holding an in-memory `Map<username, password>`, this now delegates
- * credential checking to `onLogin`, which asks the Room-backed ViewModel to look up the user.
- *
- * `onLogin` is asynchronous (Room DAOs are suspend), so the callback returns its result via
- * an inner lambda instead of a plain Boolean.
- */
+// Login screen handling user authentication against local database credentials.
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
@@ -44,7 +38,6 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    // Disables the button while we're waiting on the DB so users can't double-submit.
     var loggingIn by remember { mutableStateOf(false) }
 
     Column(

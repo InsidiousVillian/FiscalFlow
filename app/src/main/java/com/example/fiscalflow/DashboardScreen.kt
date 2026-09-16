@@ -28,20 +28,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
-// Main dark blue colour used by the FiscalFlow dashboard.
+// Theme colors for dashboard UI
 private val DashboardDarkBlue = Color(0xFF172A46)
-
-// Lavender background colour.
 private val DashboardLavender = Color(0xFFEDEBFA)
-
-// Green used for income.
 private val IncomeGreen = Color(0xFF4CAF50)
-
-// Red used for expenses.
 private val ExpenseRed = Color(0xFFE57373)
 
+// Main overview dashboard displaying monthly spend, top categories, and quick navigation
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
@@ -52,62 +48,56 @@ fun DashboardScreen(
     onGamificationClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    // Get today's date.
     val calendar = Calendar.getInstance()
-
-    // Get the current month and year.
     val currentMonth = calendar.get(Calendar.MONTH)
     val currentYear = calendar.get(Calendar.YEAR)
 
-    // Convert the expense date into a Calendar-compatible date.
     val dateFormat = SimpleDateFormat("d/M/yyyy", Locale.getDefault())
 
-    // Only include expenses from the current month.
-    val currentMonthExpenses = expenses.filter { expense ->
-
-        try {
-            val expenseDate = dateFormat.parse(expense.startDate)
-
-            if (expenseDate != null) {
-
-                val expenseCalendar = Calendar.getInstance()
-                expenseCalendar.time = expenseDate
-
-                expenseCalendar.get(Calendar.MONTH) == currentMonth &&
-                        expenseCalendar.get(Calendar.YEAR) == currentYear
-            } else {
-                false
-            }
-
-        } catch (exception: Exception) {
-            false
-        }
+    // Calculate total overall expenses using a while loop
+    var totalExpenses = 0.0
+    var totalIdx = 0
+    while (totalIdx < expenses.size) {
+        totalExpenses += expenses[totalIdx].amount
+        totalIdx++
     }
 
-    // Calculate the total amount spent this month.
-    val monthlyExpenses = currentMonthExpenses.sumOf {
-        it.amount
-    }
-
-    // Calculate the total amount spent overall.
-    val totalExpenses = expenses.sumOf {
-        it.amount
-    }
-
-    // Calculate category totals for this month.
-    val categoryTotals = currentMonthExpenses
-        .groupBy { it.category }
-        .mapValues { entry ->
-            entry.value.sumOf { expense ->
-                expense.amount
+    // Filter current month expenses using a for loop
+    val currentMonthExpenses = mutableListOf<Expense>()
+    for (expense in expenses) {
+        val expenseDate = parseExpenseDate(expense.startDate, dateFormat)
+        if (expenseDate != null) {
+            val expenseCalendar = Calendar.getInstance()
+            expenseCalendar.time = expenseDate
+            if (expenseCalendar.get(Calendar.MONTH) == currentMonth &&
+                expenseCalendar.get(Calendar.YEAR) == currentYear
+            ) {
+                currentMonthExpenses.add(expense)
             }
         }
-        .toList()
-        .sortedByDescending { it.second }
+    }
 
-    // Calculate the total used for percentages.
-    val categoryTotal = categoryTotals.sumOf {
-        it.second
+    // Calculate total monthly expenses using a for loop
+    var monthlyExpenses = 0.0
+    for (expense in currentMonthExpenses) {
+        monthlyExpenses += expense.amount
+    }
+
+    // Calculate category totals using a for loop
+    val categoryMap = mutableMapOf<String, Double>()
+    for (expense in currentMonthExpenses) {
+        val currentCatTotal = categoryMap.getOrDefault(expense.category, 0.0)
+        categoryMap[expense.category] = currentCatTotal + expense.amount
+    }
+
+    val categoryTotals = categoryMap.toList().sortedByDescending { it.second }
+
+    // Calculate category total for percentage using a while loop
+    var categoryTotal = 0.0
+    var catIdx = 0
+    while (catIdx < categoryTotals.size) {
+        categoryTotal += categoryTotals[catIdx].second
+        catIdx++
     }
 
     Column(
@@ -118,119 +108,87 @@ fun DashboardScreen(
             .padding(20.dp)
     ) {
 
-        // Dashboard heading.
         Text(
-            text = "FiscalFlow",
+            "FiscalFlow",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
 
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Your financial overview",
+            "Your financial overview",
             fontSize = 14.sp,
             color = Color.DarkGray
         )
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // TOTAL EXPENSE CARD.
+        // Total spending summary card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = DashboardDarkBlue
-            )
+            colors = CardDefaults.cardColors(containerColor = DashboardDarkBlue)
         ) {
-
-            Column(
-                modifier = Modifier.padding(22.dp)
-            ) {
-
+            Column(modifier = Modifier.padding(22.dp)) {
                 Text(
-                    text = "Total Expenses",
+                    "Total Expenses",
                     color = Color.White,
                     fontSize = 15.sp
                 )
 
-                Spacer(
-                    modifier = Modifier.height(8.dp)
-                )
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "R %.2f".format(totalExpenses),
+                    "R %.2f".format(totalExpenses),
                     color = Color.White,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Spending for this month: R %.2f"
-                        .format(monthlyExpenses),
+                    "Spending for this month: R %.2f".format(monthlyExpenses),
                     color = Color.White.copy(alpha = 0.8f),
                     fontSize = 14.sp
                 )
             }
         }
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // MONTHLY OVERVIEW TITLE.
         Text(
-            text = "Overview for this month",
+            "Overview for this month",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
 
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // INCOME AND EXPENSES CARDS.
+        // Income & expense breakdown
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-            // Income card.
             Card(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                )
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Income",
+                        "Income",
                         color = IncomeGreen,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(8.dp)
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Your current Expense model does not contain income.
                     Text(
-                        text = "R 0.00",
+                        "R 0.00",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = DashboardDarkBlue
@@ -238,31 +196,22 @@ fun DashboardScreen(
                 }
             }
 
-            // Expenses card.
             Card(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                )
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Expenses",
+                        "Expenses",
                         color = ExpenseRed,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(8.dp)
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "R %.2f".format(monthlyExpenses),
+                        "R %.2f".format(monthlyExpenses),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = DashboardDarkBlue
@@ -271,90 +220,63 @@ fun DashboardScreen(
             }
         }
 
-        Spacer(
-            modifier = Modifier.height(24.dp)
-        )
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // TOP CATEGORIES.
         Text(
-            text = "Top Categories",
+            "Top Categories",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
 
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         if (categoryTotals.isEmpty()) {
-
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                )
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-
                 Text(
-                    text = "No expenses recorded this month yet.",
+                    "No expenses recorded this month yet.",
                     modifier = Modifier.padding(18.dp),
                     color = Color.DarkGray
                 )
             }
-
         } else {
-
-            categoryTotals.forEach { (category, amount) ->
-
-                // Calculate the percentage for this category.
-                val percentage =
-                    if (categoryTotal > 0) {
-                        (amount / categoryTotal) * 100
-                    } else {
-                        0.0
-                    }
+            for ((category, amount) in categoryTotals) {
+                val percentage = if (categoryTotal > 0) (amount / categoryTotal) * 100 else 0.0
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp),
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = category,
+                                category,
                                 fontWeight = FontWeight.Bold,
                                 color = DashboardDarkBlue
                             )
 
-                            Spacer(
-                                modifier = Modifier.height(4.dp)
-                            )
+                            Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                text = "R %.2f".format(amount),
+                                "R %.2f".format(amount),
                                 color = Color.DarkGray
                             )
                         }
 
                         Text(
-                            text = "%.1f%%".format(percentage),
+                            "%.1f%%".format(percentage),
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color = DashboardDarkBlue
@@ -364,64 +286,38 @@ fun DashboardScreen(
             }
         }
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // QUICK ACCESS.
         Text(
-            text = "Quick Access",
+            "Quick Access",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
 
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Transactions button.
-        DashboardButton(
-            text = "Transactions",
-            onClick = onTransactionsClick
-        )
+        DashboardButton("Transactions", onClick = onTransactionsClick)
+        DashboardButton("Budget", onClick = onBudgetClick)
+        DashboardButton("Goals", onClick = onGoalsClick)
+        DashboardButton("XP & Milestones", onClick = onGamificationClick)
+        DashboardButton("Profile", onClick = onProfileClick)
 
-        // Budget button.
-        DashboardButton(
-            text = "Budget",
-            onClick = onBudgetClick
-        )
-
-        // Goals button.
-        DashboardButton(
-            text = "Goals",
-            onClick = onGoalsClick
-        )
-
-        // Gamification button.
-        DashboardButton(
-            text = "XP & Milestones",
-            onClick = onGamificationClick
-        )
-
-        // Profile button.
-        DashboardButton(
-            text = "Profile",
-            onClick = onProfileClick
-        )
-
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
-// Reusable button used by the Dashboard.
+// Safely parses expense date string using try-catch to prevent crashes on invalid strings
+private fun parseExpenseDate(dateStr: String, dateFormat: SimpleDateFormat): Date? {
+    return try {
+        dateFormat.parse(dateStr)
+    } catch (_: Exception) {
+        null
+    }
+}
+
 @Composable
-private fun DashboardButton(
-    text: String,
-    onClick: () -> Unit
-) {
+private fun DashboardButton(text: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = Modifier
@@ -429,9 +325,6 @@ private fun DashboardButton(
             .padding(vertical = 5.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Text(
-            text = text,
-            fontSize = 16.sp
-        )
+        Text(text, fontSize = 16.sp)
     }
 }

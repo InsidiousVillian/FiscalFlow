@@ -74,7 +74,8 @@ fun BudgetingScreen(
             .fillMaxSize()
             .background(LightLavender)
             .padding(20.dp)
-    ) {
+    )
+    {
 
         // Header
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -108,13 +109,15 @@ fun BudgetingScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(DarkBlue)
-        ) {
+        )
+        {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            )
+            {
                 Text(
                     "MONTHLY BUDGET GOAL",
                     fontSize = 12.sp,
@@ -134,7 +137,8 @@ fun BudgetingScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
+                )
+                {
                     GoalAmount("MINIMUM", minimum)
                     GoalAmount("MAXIMUM", maximum)
                 }
@@ -191,7 +195,7 @@ fun BudgetingScreen(
         // Budget status
         InfoCard(
             title = "🎯 BUDGET STATUS",
-            text = when {
+            when {
                 maximum <= 0 -> "Set your budget to start tracking your spending."
                 progress < 1 -> "You're within your budget! Keep going! 🌟"
                 else -> "You've reached your budget limit. Stay focused! 💙"
@@ -212,7 +216,7 @@ fun BudgetingScreen(
         // Motivation and streak
         InfoCard(
             title = "🌟 KEEP GOING!",
-            text = "Stay within your budget to build your consistency streak.\n\n🔥 Current streak: $currentStreak days"
+            "Stay within your budget to build your consistency streak.\n\n🔥 Current streak: $currentStreak days"
         )
     }
 
@@ -372,6 +376,7 @@ fun BudgetGoalDialog(
                     fontSize = 13.sp,
                     color = Grey
                 )
+
                 Spacer(Modifier.height(12.dp))
 
                 OutlinedTextField(
@@ -404,7 +409,8 @@ fun BudgetGoalDialog(
                     )
                 )
 
-                if (error.isNotEmpty()) {
+                if (error.isNotEmpty())
+                {
                     Spacer(Modifier.height(5.dp))
                     Text(error, color = MaterialTheme.colorScheme.error)
                 }
@@ -417,14 +423,11 @@ fun BudgetGoalDialog(
                     val max = maximum.toDoubleOrNull()
 
                     when {
-                        min == null || max == null ->
-                            error = "Please enter both amounts."
+                        min == null || max == null -> error = "Please enter both amounts."
 
-                        min < 0 || max < 0 ->
-                            error = "Amounts cannot be negative."
+                        min < 0 || max < 0 -> error = "Amounts cannot be negative."
 
-                        min > max ->
-                            error = "Minimum cannot be greater than maximum."
+                        min > max -> error = "Minimum cannot be greater than maximum."
 
                         else -> onSave(
                             BudgetingGoal(
@@ -437,7 +440,8 @@ fun BudgetGoalDialog(
                     }
                 },
                 colors = ButtonDefaults.buttonColors(DarkBlue)
-            ) {
+            )
+            {
                 Text("Save Monthly Budget")
             }
         },

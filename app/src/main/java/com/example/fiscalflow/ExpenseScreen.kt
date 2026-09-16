@@ -36,31 +36,30 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import java.util.Calendar
 
+// Expense creation screen for logging amounts, dates, categories, and optional receipts
 @Composable
 fun ExpenseScreen(
     modifier: Modifier = Modifier,
-    categories: List<String>,                 // categories loaded from Room via ViewModel
-    onExpenseSaved: (Expense) -> Unit = {},   // called after save
-    onBack: () -> Unit = {}                   // goes back
+    categories: List<String>,
+    onExpenseSaved: (Expense) -> Unit = {},
+    onBack: () -> Unit = {}
 ) {
     val today = remember { Calendar.getInstance() }
     val currentYear = today.get(Calendar.YEAR)
 
-    // Form fields
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    // Start date
+    // Start date picker state
     var startDay by remember { mutableIntStateOf(today.get(Calendar.DAY_OF_MONTH)) }
     var startMonth by remember { mutableIntStateOf(today.get(Calendar.MONTH)) }
     var startYear by remember { mutableIntStateOf(currentYear) }
 
-    // End date
+    // End date picker state
     var endDay by remember { mutableIntStateOf(today.get(Calendar.DAY_OF_MONTH)) }
     var endMonth by remember { mutableIntStateOf(today.get(Calendar.MONTH)) }
     var endYear by remember { mutableIntStateOf(currentYear) }
 
-    // Category chosen for this expense
     var selectedCategory by remember {
         mutableStateOf(categories.firstOrNull().orEmpty())
     }
@@ -82,31 +81,8 @@ fun ExpenseScreen(
     val years = remember(currentYear) {
         ((currentYear - 5)..(currentYear + 1)).toList()
     }
-    //belinda
-    val startDate = Calendar.getInstance().apply {
-        set(
-            startYear,
-            startMonth,
-            startDay,
-            0,
-            0,
-            0
-        )
-        set(Calendar.MILLISECOND, 0)
-    }
-    //belinda
-    val endDate = Calendar.getInstance().apply {
-        set(
-            endYear,
-            endMonth,
-            endDay,
-            23,
-            59,
-            59
-        )
-        set(Calendar.MILLISECOND, 999)
-    }
-    // Opens gallery to pick a receipt photo
+
+    // Photo picker launcher for attaching receipt images
     val pickImage = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -127,7 +103,6 @@ fun ExpenseScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Amount input
         OutlinedTextField(
             value = amount,
             onValueChange = {
@@ -142,7 +117,6 @@ fun ExpenseScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Start date
         DateRollerRow(
             title = "Start date",
             selectedDay = startDay,
@@ -168,7 +142,6 @@ fun ExpenseScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // End date
         DateRollerRow(
             title = "End date",
             selectedDay = endDay,
@@ -194,7 +167,6 @@ fun ExpenseScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Description input
         OutlinedTextField(
             value = description,
             onValueChange = {
@@ -208,7 +180,6 @@ fun ExpenseScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Category dropdown (same categories as Category screen)
         SimpleDropdown(
             label = "Category",
             value = categoryValue,
@@ -219,7 +190,6 @@ fun ExpenseScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Attach photo button
         Button(
             onClick = { pickImage.launch("image/*") },
             modifier = Modifier.fillMaxWidth()
@@ -227,7 +197,6 @@ fun ExpenseScreen(
             Text("Attach photo")
         }
 
-        // Shows selected receipt photo
         if (photoUri != null) {
             Spacer(modifier = Modifier.height(12.dp))
             AsyncImage(
@@ -251,7 +220,6 @@ fun ExpenseScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Save expense button
         Button(
             onClick = {
                 val parsedAmount = amount.toDoubleOrNull()
@@ -293,7 +261,6 @@ fun ExpenseScreen(
                     photoUri = photoUri?.toString()
                 )
 
-                // Save then return to categories (handled in MainActivity)
                 onExpenseSaved(expense)
             },
             modifier = Modifier.fillMaxWidth()

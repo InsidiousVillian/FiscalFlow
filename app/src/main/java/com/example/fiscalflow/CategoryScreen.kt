@@ -1,14 +1,9 @@
 package com.example.fiscalflow
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,9 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,25 +42,22 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 
-// FiscalFlow colour palette
-private val DarkBlue = androidx.compose.ui.graphics.Color(0xFF172554)
-private val Blue = androidx.compose.ui.graphics.Color(0xFF3B82F6)
-private val Lavender = androidx.compose.ui.graphics.Color(0xFFEDE9FE)
-private val LightLavender = androidx.compose.ui.graphics.Color(0xFFF7F5FF)
-private val Grey = androidx.compose.ui.graphics.Color(0xFF64748B)
-private val White = androidx.compose.ui.graphics.Color.White
+// Category theme colors
+private val DarkBlue = Color(0xFF172554)
+private val Blue = Color(0xFF3B82F6)
+private val Lavender = Color(0xFFEDE9FE)
+private val Grey = Color(0xFF64748B)
+private val White = Color.White
 
+// Category goals screen for creating categories and tracking category spending
 @Composable
 fun CategoryScreen(
     modifier: Modifier = Modifier,
-    // Data now comes from Room via ViewModel StateFlows — plain read-only Lists are enough.
     categories: List<String>,
     expenses: List<Expense>,
     budgetGoal: BudgetingGoal?,
     totalSpent: Double,
     spendingProgress: Float,
-    // Writes go through this callback so the ViewModel can persist into Room; result reports
-    // whether the insert actually happened (false = duplicate name).
     onAddCategory: (name: String, result: (Boolean) -> Unit) -> Unit,
     onDeleteCategory: (String) -> Unit,
     onLogout: () -> Unit,
@@ -68,8 +67,6 @@ fun CategoryScreen(
 ) {
     var categoryName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // null = show category list, otherwise show expenses for that category
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -102,17 +99,13 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Monthly Spending Progress
+        // Spending progress summary card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = DarkBlue
-            ),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+            colors = CardDefaults.cardColors(containerColor = DarkBlue),
+            shape = RoundedCornerShape(20.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(18.dp)
-            ) {
+            Column(modifier = Modifier.padding(18.dp)) {
                 Text(
                     text = "Budget Goal Progress",
                     fontSize = 17.sp,
@@ -142,7 +135,7 @@ fun CategoryScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                androidx.compose.material3.LinearProgressIndicator(
+                LinearProgressIndicator(
                     progress = { spendingProgress },
                     modifier = Modifier.fillMaxWidth(),
                     color = Blue,
@@ -152,16 +145,10 @@ fun CategoryScreen(
                 Spacer(modifier = Modifier.height(9.dp))
 
                 budgetGoal?.let { goal ->
-
                     val message = when {
-                        totalSpent < goal.minimum ->
-                            "🎯 You're below your minimum spending goal."
-
-                        totalSpent <= goal.maximum ->
-                            "⭐ Great! You're within your spending goal."
-
-                        else ->
-                            "⚠️ You've exceeded your maximum goal."
+                        totalSpent < goal.minimum -> "🎯 You're below your minimum spending goal."
+                        totalSpent <= goal.maximum -> "⭐ Great! You're within your spending goal."
+                        else -> "⚠️ You've exceeded your maximum goal."
                     }
 
                     Text(
@@ -176,7 +163,6 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Main actions (kept outside the category list so they only appear once)
         Button(
             onClick = onAddExpense,
             modifier = Modifier
@@ -184,11 +170,7 @@ fun CategoryScreen(
                 .height(48.dp),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
         ) {
-            Text(
-                "Add Expense",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Add Expense", fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(7.dp))
@@ -215,11 +197,7 @@ fun CategoryScreen(
                 .height(48.dp),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
         ) {
-            Text(
-                "← Dashboard",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text("← Dashboard", fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(7.dp))
@@ -233,7 +211,7 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Category Input Section
+        // New category input row
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -244,12 +222,7 @@ fun CategoryScreen(
                     categoryName = it
                     errorMessage = null
                 },
-                label = {
-                    Text(
-                        "New Category",
-                        fontSize = 13.sp
-                    )
-                },
+                label = { Text("New Category", fontSize = 13.sp) },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
@@ -262,8 +235,6 @@ fun CategoryScreen(
                     val trimmed = categoryName.trim()
                     when {
                         trimmed.isBlank() -> errorMessage = "Category name cannot be empty"
-                        // Cheap client-side duplicate check so we can show an error immediately;
-                        // the DAO is still the source of truth (PRIMARY KEY on name).
                         categories.any { it.equals(trimmed, ignoreCase = true) } ->
                             errorMessage = "Category already exists"
                         else -> {
@@ -281,11 +252,7 @@ fun CategoryScreen(
                 modifier = Modifier.height(48.dp),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
             ) {
-                Text(
-                    "Add",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Add", fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -317,7 +284,7 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(7.dp))
 
-        // Display Category List
+        // Category list
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -334,9 +301,7 @@ fun CategoryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { selectedCategory = category },
-                    colors = CardDefaults.cardColors(
-                        containerColor = White
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = White),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                     elevation = CardDefaults.cardElevation(3.dp)
                 ) {
@@ -346,9 +311,7 @@ fun CategoryScreen(
                             .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
-                        // Visual category icon
-                        androidx.compose.foundation.layout.Box(
+                        Box(
                             modifier = Modifier
                                 .width(52.dp)
                                 .height(52.dp)
@@ -358,18 +321,12 @@ fun CategoryScreen(
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "🎯",
-                                fontSize = 25.sp
-                            )
+                            Text("🎯", fontSize = 25.sp)
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        // Category information
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = category,
                                 fontSize = 16.sp,
@@ -395,11 +352,9 @@ fun CategoryScreen(
                             )
                         }
 
-                        // Delete category
                         IconButton(
                             onClick = {
                                 onDeleteCategory(category)
-
                                 if (selectedCategory == category) {
                                     selectedCategory = null
                                 }
@@ -410,111 +365,6 @@ fun CategoryScreen(
                                 contentDescription = "Delete $category category",
                                 tint = MaterialTheme.colorScheme.error
                             )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Shows expenses saved under one category
-    @Composable
-    fun CategoryExpensesView(
-        modifier: Modifier = Modifier,
-        categoryName: String,
-        expenses: List<Expense>,
-        onBack: () -> Unit
-    ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = categoryName,
-                    fontSize = 25.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkBlue
-                )
-
-                TextButton(onClick = onBack) {
-                    Text(
-                        "Back",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Blue
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            if (expenses.isEmpty()) {
-                Text(
-                    text = "No expenses in this category yet.",
-                    fontSize = 14.sp,
-                    color = Grey
-                )
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(expenses) { expense ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = LightLavender
-                            ),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(15.dp)
-                            ) {
-                                Text(
-                                    text = "Amount: R${expense.amount}",
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = DarkBlue
-                                )
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = "Description: ${expense.description}",
-                                    fontSize = 13.sp,
-                                    color = Grey
-                                )
-
-                                Text(
-                                    text = "Start date: ${expense.startDate}",
-                                    fontSize = 13.sp,
-                                    color = Grey
-                                )
-
-                                Text(
-                                    text = "End date: ${expense.endDate}",
-                                    fontSize = 13.sp,
-                                    color = Grey
-                                )
-
-                                if (!expense.photoUri.isNullOrBlank()) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    AsyncImage(
-                                        model = expense.photoUri.toUri(),
-                                        contentDescription = "Expense receipt",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(150.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            }
                         }
                     }
                 }
