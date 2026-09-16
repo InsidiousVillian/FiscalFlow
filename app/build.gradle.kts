@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose) // collectAsStateWithLifecycle()
     implementation(libs.coil.compose) // shows receipt photo preview
+    // Material icons for nicer expense screen visuals
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Room: offline SQLite-backed database
     implementation(libs.androidx.room.runtime)
