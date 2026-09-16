@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 fun LoginScreen(
     modifier: Modifier = Modifier,
     onLogin: (username: String, password: String, result: (Boolean) -> Unit) -> Unit,
-    onLoginSuccess: () -> Unit = {},
+    onLoginSuccess: (String) -> Unit = {},
     onNavigateToSignUp: () -> Unit = {}
 ) {
     var username by remember { mutableStateOf("") }
@@ -122,7 +122,7 @@ fun LoginScreen(
                     loggingIn = false
                     if (success) {
                         errorMessage = null
-                        onLoginSuccess()
+                        onLoginSuccess(username.trim())
                     } else {
                         errorMessage = "Invalid username or password"
                     }

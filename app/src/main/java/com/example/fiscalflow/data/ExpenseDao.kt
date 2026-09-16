@@ -19,4 +19,8 @@ interface ExpenseDao {
 
     @Delete
     suspend fun delete(expense: Expense)
+
+    // Deletes all expenses belonging to a category
+    @Query("DELETE FROM expenses WHERE category = :categoryName")
+    suspend fun deleteByCategory(categoryName: String)
 }

@@ -62,6 +62,12 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
             onResult(repository.addCategory(name))
         }
     }
+    // Delete a category and its saved expenses
+    fun deleteCategory(category: String) {
+        viewModelScope.launch {
+            repository.deleteCategory(category)
+        }
+    }
 
     fun addExpense(expense: Expense) {
         viewModelScope.launch { repository.addExpense(expense) }

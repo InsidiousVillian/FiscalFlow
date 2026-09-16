@@ -72,6 +72,18 @@ class FiscalFlowRepository(
         return inserted
     }
 
+    // Delete a category and all expenses saved under it
+    suspend fun deleteCategory(category: String) {
+
+        // Delete the expenses belonging to this category first
+        expenseDao.deleteByCategory(category)
+
+        // Then delete the category itself
+        categoryDao.deleteByName(category)
+
+        Log.d(tag, "deleteCategory('$category') completed")
+    }
+
     suspend fun seedDefaultCategoriesIfEmpty() {
         if (categoryDao.count() == 0) {
             listOf("Groceries", "Rent", "Utilities").forEach {

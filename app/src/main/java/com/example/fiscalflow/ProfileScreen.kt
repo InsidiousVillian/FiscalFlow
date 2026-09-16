@@ -26,38 +26,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
-//Profile screen colour
+// Profile screen colour
 private val ProfileDarkBlue = Color(0xFF172A46)
 
-//Background colour
+// Background colour
 private val ProfileLavender = Color(0xFFEDEBFA)
 
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
-    //Name of the user
+
+    // Name of the user
     username: String,
 
-    //Profile image
+    // Profile image
     profileImageUri: String?,
 
-    //Return to dashboard
+    // Return to dashboard
     onBackToDashboard: () -> Unit,
 
-    //Log out
+    // Log out
     onLogout: () -> Unit
-)
-{
+) {
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(ProfileLavender)
             .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-    )
-    {
-    //Title screen
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        // Title screen
         Text(
             text = "Profile",
             fontSize = 28.sp,
@@ -67,25 +67,25 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        //Profile Card
+        // Profile Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White)
-        )
-        {
+                containerColor = Color.White
+            )
+        ) {
+
             Column(
-                modifier = Modifier.padding(22.dp)
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
-            )
-            {
+            ) {
 
+                // Show the user's selected image
                 if (profileImageUri != null) {
 
-                    //Show the user's selected image.
                     AsyncImage(
                         model = profileImageUri,
                         contentDescription = "Profile image",
@@ -95,10 +95,9 @@ fun ProfileScreen(
                         contentScale = ContentScale.Crop
                     )
 
-                }
-                else
-                {
-                    //Add a placeholder without an image
+                } else {
+
+                    // Placeholder when the user has no image
                     Column(
                         modifier = Modifier
                             .size(120.dp)
@@ -106,8 +105,7 @@ fun ProfileScreen(
                             .background(ProfileDarkBlue),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
-                    )
-                    {
+                    ) {
 
                         Text(
                             text = username
@@ -120,8 +118,20 @@ fun ProfileScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                // Space between image and username
+                Spacer(modifier = Modifier.height(12.dp))
 
+                // USERNAME UNDER PROFILE IMAGE
+                Text(
+                    text = username,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ProfileDarkBlue
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Profile description
                 Text(
                     text = "Manage your FiscalFlow account and preferences.",
                     color = Color.DarkGray,
@@ -132,23 +142,21 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        //Dashboard button
+        // Dashboard button
         Button(
             onClick = onBackToDashboard,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp)
-        )
-        {
+        ) {
             Text("Back to Dashboard")
         }
-        //Logout Button
+
+        // Logout button
         Button(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp)
-        )
-        {
-
+        ) {
             Text("Log Out")
         }
     }

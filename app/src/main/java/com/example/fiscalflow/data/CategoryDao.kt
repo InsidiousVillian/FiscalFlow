@@ -20,6 +20,10 @@ interface CategoryDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(category: CategoryEntity): Long
 
+    // Deletes a category using its name
+    @Query("DELETE FROM categories WHERE name = :categoryName")
+    suspend fun deleteByName(categoryName: String)
+
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun count(): Int
 }
