@@ -32,18 +32,25 @@ class MainActivity : ComponentActivity() {
                 // userProgress is observed so future screens can show XP/streak; safe to leave unused for now.
                 @Suppress("UNUSED_VARIABLE")
                 val userProgress by vm.userProgress.collectAsStateWithLifecycle()
-                //Assign current screen
-                var currentScreen by remember { mutableStateOf("login") }
-                //Assign the username
+                // Initial screen state
+                var currentScreen by remember { mutableStateOf("welcome") }
                 var loggedInUsername by remember { mutableStateOf("") }
-                // Derived values recomputed automatically whenever expenses/goal change in the DB.
+
                 val totalSpent = expenses.sumOf { it.amount }
                 val spendingProgress = budgetGoal?.let {
                     calculateProgress(totalSpent = totalSpent, maximum = it.maximum) } ?: 0f
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
-                        //Login screen
+                        // Welcome screen
+                        "welcome" -> {
+                            WelcomeScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                onGetStarted = { currentScreen = "signup" },
+                                onNavigateToLogin = { currentScreen = "login" }
+                            )
+                        }
+                        // Login screen
                         "login" -> {
                             LoginScreen(
                                 modifier = Modifier.padding(innerPadding),

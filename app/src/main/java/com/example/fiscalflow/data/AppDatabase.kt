@@ -19,7 +19,7 @@ import com.example.fiscalflow.UsersProgress
         BudgetingGoal::class,
         UsersProgress::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

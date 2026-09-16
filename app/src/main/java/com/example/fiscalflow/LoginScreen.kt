@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -20,11 +21,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 // Login screen handling user authentication against local database credentials.
 @Composable
@@ -49,7 +52,8 @@ fun LoginScreen(
     ) {
         Text(
             text = "Welcome Back",
-            style = MaterialTheme.typography.headlineMedium
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -60,7 +64,7 @@ fun LoginScreen(
                 username = it
                 errorMessage = null
             },
-            label = { Text("Username") },
+            label = { Text("Username", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
@@ -77,7 +81,7 @@ fun LoginScreen(
                 password = it
                 errorMessage = null
             },
-            label = { Text("Password") },
+            label = { Text("Password", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -87,7 +91,7 @@ fun LoginScreen(
             ),
             trailingIcon = {
                 TextButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Text(if (passwordVisible) "Hide" else "Show")
+                    Text(if (passwordVisible) "Hide" else "Show", fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -97,7 +101,8 @@ fun LoginScreen(
             Text(
                 text = errorMessage!!,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
             )
         }
 
@@ -121,15 +126,26 @@ fun LoginScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text(if (loggingIn) "Signing in…" else "Log In")
+            Text(
+                text = if (loggingIn) "Signing in…" else "Log In",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         TextButton(onClick = onNavigateToSignUp) {
-            Text("Don't have an account? Sign Up")
+            Text(
+                text = "Don't have an account? Sign Up",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

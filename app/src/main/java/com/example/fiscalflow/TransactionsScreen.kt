@@ -43,12 +43,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
-// FiscalFlow Dashboard & Screen Color Palette
+// Theme colors
 private val TransactionDarkBlue = Color(0xFF172A46)
 private val TransactionLavender = Color(0xFFEDEBFA)
 private val IncomeGreen = Color(0xFF4CAF50)
 private val ExpenseRed = Color(0xFFE57373)
 
+// Screen displaying list of recorded transactions, income/expense breakdown, and search filters
 @Composable
 fun TransactionsScreen(
     modifier: Modifier = Modifier,
@@ -56,29 +57,39 @@ fun TransactionsScreen(
     categories: List<String>,
     onAddExpense: () -> Unit = {},
     onBackToDashboard: () -> Unit = {}
-)
-{
+) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoryFilter by remember { mutableStateOf("All") }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     var selectedReceiptUri by remember { mutableStateOf<String?>(null) }
 
-    // Calculate total spent overall
-    val totalSpent = expenses.sumOf { it.amount }
+    // Calculate total spent and total income using a while loop
+    var totalSpent = 0.0
+    var totalIncome = 0.0
+    var totalIdx = 0
+    while (totalIdx < expenses.size) {
+        val item = expenses[totalIdx]
+        if (item.isIncome) {
+            totalIncome += item.amount
+        } else {
+            totalSpent += item.amount
+        }
+        totalIdx++
+    }
 
-    // Total income (Currently hardcoded at R 0.00 until income model is introduced)
-    val totalIncome = 0.0
-
-    // Filter expenses based on search query and category filter
-    val filteredExpenses = expenses.filter { expense ->
+    // Filter expenses using a for loop
+    val filteredExpenses = mutableListOf<Expense>()
+    for (expense in expenses) {
         val matchesSearch = searchQuery.isBlank() ||
                 expense.description.contains(searchQuery, ignoreCase = true) ||
                 expense.category.contains(searchQuery, ignoreCase = true)
 
-        val matchesCategory = selectedCategoryFilter == "All" ||
+        val matchesCategory = (selectedCategoryFilter == "All") ||
                 expense.category.equals(selectedCategoryFilter, ignoreCase = true)
 
-        matchesSearch && matchesCategory
+        if (matchesSearch && matchesCategory) {
+            filteredExpenses.add(expense)
+        }
     }
 
     val categoryFilterOptions = remember(categories) {
@@ -92,10 +103,9 @@ fun TransactionsScreen(
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
-        // Screen Heading
         Text(
             text = "Transactions",
-            fontSize = 28.sp,
+            fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
             color = TransactionDarkBlue
         )
@@ -103,8 +113,8 @@ fun TransactionsScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Overview of all incomes, expenses & total spent",
-            fontSize = 14.sp,
+            text = "Overview of all incomes, expenses & total spent in Rands",
+            fontSize = 15.sp,
             color = Color.DarkGray
         )
 
@@ -114,17 +124,13 @@ fun TransactionsScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = TransactionDarkBlue
-            )
+            colors = CardDefaults.cardColors(containerColor = TransactionDarkBlue)
         ) {
-            Column(
-                modifier = Modifier.padding(22.dp)
-            ) {
+            Column(modifier = Modifier.padding(22.dp)) {
                 Text(
                     text = "Total Spent",
                     color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
 
@@ -133,54 +139,51 @@ fun TransactionsScreen(
                 Text(
                     text = "R %.2f".format(totalSpent),
                     color = Color.White,
-                    fontSize = 32.sp,
+                    fontSize = 34.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = "${expenses.size} total transaction(s) recorded",
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 13.sp
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 15.sp
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Income and expense summary
+        // Income & Expense totals summary
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Income summary card
             Card(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(34.dp)
                                 .clip(CircleShape)
                                 .background(IncomeGreen.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "↑", color = IncomeGreen, fontWeight = FontWeight.Bold)
+                            Text(text = "↑", color = IncomeGreen, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
-                            "Income",
+                            text = "Income",
                             color = IncomeGreen,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 16.sp
                         )
                     }
 
@@ -188,49 +191,45 @@ fun TransactionsScreen(
 
                     Text(
                         text = "R %.2f".format(totalIncome),
-                        fontSize = 20.sp,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = TransactionDarkBlue
                     )
                 }
             }
 
-            // Expenses summary card
             Card(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
-            )
-            {
-                Column(Modifier.padding(16.dp))
-                {
-                    Row(verticalAlignment = Alignment.CenterVertically)
-                    {
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(34.dp)
                                 .clip(CircleShape)
                                 .background(ExpenseRed.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "↓", color = ExpenseRed, fontWeight = FontWeight.Bold)
+                            Text(text = "↓", color = ExpenseRed, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
 
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
-                            "Expenses",
+                            text = "Expenses",
                             color = ExpenseRed,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 16.sp
                         )
                     }
 
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        "R %.2f".format(totalSpent),
-                        fontSize = 20.sp,
+                        text = "R %.2f".format(totalSpent),
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = TransactionDarkBlue
                     )
@@ -240,50 +239,46 @@ fun TransactionsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Search and f
         Text(
-            "All Transactions",
-            fontSize = 20.sp,
+            text = "All Transactions",
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = TransactionDarkBlue
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Search and category filter controls
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
-        )
-        {
+        ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("Search description…") },
+                label = { Text("Search description…", fontSize = 14.sp) },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(14.dp)
             )
 
-            // Category Filter Dropdown
             Box {
                 OutlinedButton(
                     onClick = { categoryDropdownExpanded = true },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.height(56.dp)
-                )
-                {
-                    Text("Category: $selectedCategoryFilter")
+                ) {
+                    Text("Category: $selectedCategoryFilter", fontSize = 14.sp)
                 }
 
                 DropdownMenu(
                     expanded = categoryDropdownExpanded,
                     onDismissRequest = { categoryDropdownExpanded = false }
-                )
-                {
+                ) {
                     categoryFilterOptions.forEach { option ->
                         DropdownMenuItem(
-                            text = { Text(option) },
+                            text = { Text(option, fontSize = 15.sp) },
                             onClick = {
                                 selectedCategoryFilter = option
                                 categoryDropdownExpanded = false
@@ -296,66 +291,75 @@ fun TransactionsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TRANSACTIONS LIST
-        if (filteredExpenses.isEmpty())
-        {
+        // Transaction entries list
+        if (filteredExpenses.isEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
-            )
-            {
+            ) {
                 Text(
-                    if (expenses.isEmpty())
-                    {
-                        "No transactions recorded yet. Click 'Add Expense' below to add your first transaction."
-                    }
-                    else
-                    {
+                    text = if (expenses.isEmpty()) {
+                        "No transactions recorded yet. Click '+ Add Transaction' below to record your first transaction."
+                    } else {
                         "No transactions match your search filter."
                     },
                     modifier = Modifier.padding(20.dp),
+                    fontSize = 15.sp,
                     color = Color.DarkGray
                 )
             }
-        }
-        else
-        {
-            filteredExpenses.forEach { expense ->
+        } else {
+            for (expense in filteredExpenses) {
+                val categoryIcon = if (expense.isIncome) "💰" else when (expense.category.lowercase()) {
+                    "groceries" -> "🛒"
+                    "rent" -> "🏠"
+                    "utilities" -> "⚡"
+                    "food" -> "🍕"
+                    "healthcare", "medical" -> "🩺"
+                    "travel" -> "✈️"
+                    "entertainment", "movies" -> "🎬"
+                    "education", "books" -> "📚"
+                    "savings" -> "🐷"
+                    "transport" -> "🚗"
+                    "shopping", "clothing" -> "👕"
+                    else -> "💳"
+                }
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
-                )
-                {
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
-                    )
-                    {
-                        // Category Icon Badge
+                    ) {
+                        // Image Thumbnail or Category Icon Badge
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(TransactionLavender),
+                                .background(if (expense.isIncome) Color(0xFFDCFCE7) else TransactionLavender),
                             contentAlignment = Alignment.Center
-                        )
-                        {
-                            Text(
-                                when (expense.category.lowercase())
-                                {
-                                    "groceries" -> "🛒"
-                                    "rent" -> "🏠"
-                                    "utilities" -> "⚡"
-                                    else -> "💳"
-                                },
-                                fontSize = 24.sp
-                            )
+                        ) {
+                            if (!expense.photoUri.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = expense.photoUri,
+                                    contentDescription = expense.category,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Text(
+                                    text = categoryIcon,
+                                    fontSize = 24.sp
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(14.dp))
@@ -363,9 +367,9 @@ fun TransactionsScreen(
                         // Transaction Info
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                expense.description.ifBlank { expense.category },
+                                text = "$categoryIcon ${expense.description.ifBlank { expense.category }}",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
+                                fontSize = 17.sp,
                                 color = TransactionDarkBlue
                             )
 
@@ -373,15 +377,15 @@ fun TransactionsScreen(
 
                             Text(
                                 text = "${expense.category} • ${expense.startDate}",
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 color = Color.Gray
                             )
 
                             if (!expense.photoUri.isNullOrBlank()) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    "📷 View Receipt",
-                                    fontSize = 11.sp,
+                                    text = "📷 View Receipt Image",
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF3B82F6),
                                     modifier = Modifier.clickable {
@@ -391,12 +395,12 @@ fun TransactionsScreen(
                             }
                         }
 
-                        // Amount
+                        // Amount (Green for Income, Red for Expense)
                         Text(
-                            "- R %.2f".format(expense.amount),
-                            fontSize = 17.sp,
+                            text = if (expense.isIncome) "+ R %.2f".format(expense.amount) else "- R %.2f".format(expense.amount),
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = ExpenseRed
+                            color = if (expense.isIncome) IncomeGreen else ExpenseRed
                         )
                     }
                 }
@@ -405,19 +409,17 @@ fun TransactionsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ACTION BUTTONS
         Button(
             onClick = onAddExpense,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(52.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = TransactionDarkBlue)
-        )
-        {
+        ) {
             Text(
-                "+ Add Expense",
-                fontSize = 15.sp,
+                text = "+ Add Transaction (Expense / Income)",
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -427,15 +429,14 @@ fun TransactionsScreen(
 
         Button(
             onClick = onBackToDashboard,
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(52.dp),
             shape = RoundedCornerShape(14.dp)
-        )
-        {
+        ) {
             Text(
-                "← Back to Dashboard",
-                fontSize = 15.sp,
+                text = "← Back to Dashboard",
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -443,11 +444,10 @@ fun TransactionsScreen(
         Spacer(modifier = Modifier.height(20.dp))
     }
 
-    // Receipt Modal Dialog
     if (selectedReceiptUri != null) {
         AlertDialog(
             onDismissRequest = { selectedReceiptUri = null },
-            title = { Text("Receipt Photo") },
+            title = { Text("Receipt Photo", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
             text = {
                 AsyncImage(
                     model = selectedReceiptUri,
@@ -460,7 +460,7 @@ fun TransactionsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { selectedReceiptUri = null }) {
-                    Text("Close")
+                    Text("Close", fontSize = 15.sp)
                 }
             }
         )

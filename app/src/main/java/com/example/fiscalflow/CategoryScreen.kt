@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,12 +35,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import coil.compose.AsyncImage
 
 // Category theme colors
@@ -82,7 +83,7 @@ fun CategoryScreen(
         ) {
             Text(
                 text = "Category Goals",
-                fontSize = 25.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkBlue
             )
@@ -90,7 +91,7 @@ fun CategoryScreen(
             TextButton(onClick = onLogout) {
                 Text(
                     "Log Out",
-                    fontSize = 13.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Blue
                 )
@@ -108,7 +109,7 @@ fun CategoryScreen(
             Column(modifier = Modifier.padding(18.dp)) {
                 Text(
                     text = "Budget Goal Progress",
-                    fontSize = 17.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = White
                 )
@@ -117,7 +118,7 @@ fun CategoryScreen(
 
                 Text(
                     text = "This is your spending goal tracker — not the period review.",
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     color = Lavender
                 )
 
@@ -128,7 +129,7 @@ fun CategoryScreen(
                         totalSpent,
                         budgetGoal?.maximum ?: 0.0
                     ),
-                    fontSize = 24.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = White
                 )
@@ -153,7 +154,7 @@ fun CategoryScreen(
 
                     Text(
                         text = message,
-                        fontSize = 13.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         color = White
                     )
@@ -167,44 +168,45 @@ fun CategoryScreen(
             onClick = onAddExpense,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("Add Expense", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text("Add Expense", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
-        Spacer(modifier = Modifier.height(7.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = onViewHistory,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
             Text(
                 "Review Category Totals by Period",
-                fontSize = 13.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
         }
-        Spacer(modifier = Modifier.height(7.dp))
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = onBackToDashboard,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("← Dashboard", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("← Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
-        Spacer(modifier = Modifier.height(7.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Pick This Week, This Month, or a Custom date range",
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             color = Grey,
             modifier = Modifier.padding(top = 4.dp)
         )
@@ -222,13 +224,13 @@ fun CategoryScreen(
                     categoryName = it
                     errorMessage = null
                 },
-                label = { Text("New Category", fontSize = 13.sp) },
+                label = { Text("New Category", fontSize = 15.sp) },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(14.dp)
             )
 
-            Spacer(modifier = Modifier.width(7.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Button(
                 onClick = {
@@ -249,10 +251,10 @@ fun CategoryScreen(
                         }
                     }
                 },
-                modifier = Modifier.height(48.dp),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+                modifier = Modifier.height(50.dp),
+                shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Add", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Add", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -261,7 +263,7 @@ fun CategoryScreen(
             Text(
                 text = errorMessage.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
-                fontSize = 11.sp
+                fontSize = 14.sp
             )
         }
 
@@ -269,7 +271,7 @@ fun CategoryScreen(
 
         Text(
             text = "Your Categories",
-            fontSize = 18.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = DarkBlue
         )
@@ -278,11 +280,11 @@ fun CategoryScreen(
 
         Text(
             text = "Tap a category to view its expenses",
-            fontSize = 11.sp,
+            fontSize = 14.sp,
             color = Grey
         )
 
-        Spacer(modifier = Modifier.height(7.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Category list
         LazyColumn(
@@ -292,17 +294,32 @@ fun CategoryScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { category ->
-                val count = expenses.count { it.category == category }
-                val categoryTotal = expenses
-                    .filter { it.category == category }
-                    .sumOf { it.amount }
+                val categoryExpenses = expenses.filter { it.category == category }
+                val count = categoryExpenses.size
+                val categoryTotal = categoryExpenses.sumOf { it.amount }
+                val latestExpenseWithPhoto = categoryExpenses.lastOrNull { !it.photoUri.isNullOrBlank() }
+
+                val categoryIcon = when (category.lowercase()) {
+                    "groceries" -> "🛒"
+                    "rent" -> "🏠"
+                    "utilities" -> "⚡"
+                    "food" -> "🍕"
+                    "healthcare", "medical" -> "🩺"
+                    "travel" -> "✈️"
+                    "entertainment", "movies" -> "🎬"
+                    "education", "books" -> "📚"
+                    "savings" -> "🐷"
+                    "transport" -> "🚗"
+                    "shopping", "clothing" -> "👕"
+                    else -> "🎯"
+                }
 
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { selectedCategory = category },
                     colors = CardDefaults.cardColors(containerColor = White),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(20.dp),
                     elevation = CardDefaults.cardElevation(3.dp)
                 ) {
                     Row(
@@ -313,23 +330,32 @@ fun CategoryScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .width(52.dp)
-                                .height(52.dp)
-                                .background(
-                                    Lavender,
-                                    androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                                ),
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Lavender),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("🎯", fontSize = 25.sp)
+                            if (latestExpenseWithPhoto?.photoUri != null) {
+                                AsyncImage(
+                                    model = latestExpenseWithPhoto.photoUri,
+                                    contentDescription = category,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Text(
+                                    text = categoryIcon,
+                                    fontSize = 25.sp
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = category,
-                                fontSize = 16.sp,
+                                text = "$categoryIcon $category",
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = DarkBlue
                             )
@@ -338,7 +364,7 @@ fun CategoryScreen(
 
                             Text(
                                 text = "$count expense(s)",
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 color = Grey
                             )
 
@@ -346,7 +372,7 @@ fun CategoryScreen(
 
                             Text(
                                 text = "R %.2f spent".format(categoryTotal),
-                                fontSize = 14.sp,
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Blue
                             )

@@ -10,14 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,10 +32,10 @@ import java.util.Locale
 // Theme colors for dashboard UI
 private val DashboardDarkBlue = Color(0xFF172A46)
 private val DashboardLavender = Color(0xFFEDEBFA)
-private val IncomeGreen = Color(0xFF4CAF50)
-private val ExpenseRed = Color(0xFFE57373)
+private val IncomeGreen = Color(0xFF15803D)
+private val ExpenseRed = Color(0xFFDC2626)
 
-// Main overview dashboard displaying monthly spend, top categories, and quick navigation
+// Main overview dashboard displaying monthly spend, income, top categories, and quick navigation
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
@@ -58,12 +56,14 @@ fun DashboardScreen(
     var totalExpenses = 0.0
     var totalIdx = 0
     while (totalIdx < expenses.size) {
-        totalExpenses += expenses[totalIdx].amount
+        if (!expenses[totalIdx].isIncome) {
+            totalExpenses += expenses[totalIdx].amount
+        }
         totalIdx++
     }
 
-    // Filter current month expenses using a for loop
-    val currentMonthExpenses = mutableListOf<Expense>()
+    // Filter current month transactions using a for loop
+    val currentMonthTransactions = mutableListOf<Expense>()
     for (expense in expenses) {
         val expenseDate = parseExpenseDate(expense.startDate, dateFormat)
         if (expenseDate != null) {
@@ -72,22 +72,29 @@ fun DashboardScreen(
             if (expenseCalendar.get(Calendar.MONTH) == currentMonth &&
                 expenseCalendar.get(Calendar.YEAR) == currentYear
             ) {
-                currentMonthExpenses.add(expense)
+                currentMonthTransactions.add(expense)
             }
         }
     }
 
-    // Calculate total monthly expenses using a for loop
+    // Calculate monthly expenses & income using a for loop
     var monthlyExpenses = 0.0
-    for (expense in currentMonthExpenses) {
-        monthlyExpenses += expense.amount
+    var monthlyIncome = 0.0
+    for (item in currentMonthTransactions) {
+        if (item.isIncome) {
+            monthlyIncome += item.amount
+        } else {
+            monthlyExpenses += item.amount
+        }
     }
 
-    // Calculate category totals using a for loop
+    // Calculate category totals using a for loop (expenses only)
     val categoryMap = mutableMapOf<String, Double>()
-    for (expense in currentMonthExpenses) {
-        val currentCatTotal = categoryMap.getOrDefault(expense.category, 0.0)
-        categoryMap[expense.category] = currentCatTotal + expense.amount
+    for (expense in currentMonthTransactions) {
+        if (!expense.isIncome) {
+            val currentCatTotal = categoryMap.getOrDefault(expense.category, 0.0)
+            categoryMap[expense.category] = currentCatTotal + expense.amount
+        }
     }
 
     val categoryTotals = categoryMap.toList().sortedByDescending { it.second }
@@ -109,8 +116,8 @@ fun DashboardScreen(
     ) {
 
         Text(
-            "FiscalFlow",
-            fontSize = 28.sp,
+            text = "FiscalFlow",
+            fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
@@ -118,9 +125,10 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            "Your financial overview",
-            fontSize = 14.sp,
-            color = Color.DarkGray
+            text = "Your financial overview in Rands",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = DashboardDarkBlue
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -133,26 +141,28 @@ fun DashboardScreen(
         ) {
             Column(modifier = Modifier.padding(22.dp)) {
                 Text(
-                    "Total Expenses",
+                    text = "Total Expenses",
                     color = Color.White,
-                    fontSize = 15.sp
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    "R %.2f".format(totalExpenses),
+                    text = "R %.2f".format(totalExpenses),
                     color = Color.White,
-                    fontSize = 32.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    "Spending for this month: R %.2f".format(monthlyExpenses),
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 14.sp
+                    text = "Spending for this month: R %.2f".format(monthlyExpenses),
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -160,8 +170,8 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            "Overview for this month",
-            fontSize = 20.sp,
+            text = "Overview for this month",
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
@@ -180,16 +190,17 @@ fun DashboardScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Income",
+                        text = "Income",
                         color = IncomeGreen,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        "R 0.00",
-                        fontSize = 20.sp,
+                        text = "R %.2f".format(monthlyIncome),
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = DashboardDarkBlue
                     )
@@ -203,16 +214,17 @@ fun DashboardScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Expenses",
+                        text = "Expenses",
                         color = ExpenseRed,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        "R %.2f".format(monthlyExpenses),
-                        fontSize = 20.sp,
+                        text = "R %.2f".format(monthlyExpenses),
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = DashboardDarkBlue
                     )
@@ -223,8 +235,8 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            "Top Categories",
-            fontSize = 20.sp,
+            text = "Top Categories",
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
@@ -238,9 +250,11 @@ fun DashboardScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Text(
-                    "No expenses recorded this month yet.",
+                    text = "No expenses recorded this month yet.",
                     modifier = Modifier.padding(18.dp),
-                    color = Color.DarkGray
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DashboardDarkBlue
                 )
             }
         } else {
@@ -262,22 +276,25 @@ fun DashboardScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                category,
+                                text = category,
                                 fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
                                 color = DashboardDarkBlue
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                "R %.2f".format(amount),
-                                color = Color.DarkGray
+                                text = "R %.2f".format(amount),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DashboardDarkBlue
                             )
                         }
 
                         Text(
-                            "%.1f%%".format(percentage),
-                            fontSize = 17.sp,
+                            text = "%.1f%%".format(percentage),
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = DashboardDarkBlue
                         )
@@ -289,8 +306,8 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            "Quick Access",
-            fontSize = 20.sp,
+            text = "Quick Access",
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
@@ -307,7 +324,6 @@ fun DashboardScreen(
     }
 }
 
-// Safely parses expense date string using try-catch to prevent crashes on invalid strings
 private fun parseExpenseDate(dateStr: String, dateFormat: SimpleDateFormat): Date? {
     return try {
         dateFormat.parse(dateStr)
@@ -325,6 +341,6 @@ private fun DashboardButton(text: String, onClick: () -> Unit) {
             .padding(vertical = 5.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Text(text, fontSize = 16.sp)
+        Text(text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
     }
 }

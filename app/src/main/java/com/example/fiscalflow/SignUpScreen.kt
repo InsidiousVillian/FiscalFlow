@@ -1,12 +1,15 @@
 package com.example.fiscalflow
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 // Sign-up screen allowing users to register a new account.
 @Composable
@@ -31,7 +34,8 @@ fun SignUpScreen(
     ) {
         Text(
             text = "Create Account",
-            style = MaterialTheme.typography.headlineMedium
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -39,7 +43,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = username,
             onValueChange = { username = it; errorMessage = null },
-            label = { Text("Username") },
+            label = { Text("Username", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -49,7 +53,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it; errorMessage = null },
-            label = { Text("Password") },
+            label = { Text("Password", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
@@ -60,7 +64,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it; errorMessage = null },
-            label = { Text("Confirm Password") },
+            label = { Text("Confirm Password", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
@@ -71,7 +75,8 @@ fun SignUpScreen(
             Text(
                 text = errorMessage!!,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
             )
         }
 
@@ -98,15 +103,26 @@ fun SignUpScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text(if (submitting) "Creating…" else "Sign Up")
+            Text(
+                text = if (submitting) "Creating…" else "Sign Up",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         TextButton(onClick = onNavigateToLogin) {
-            Text("Already have an account? Log In")
+            Text(
+                text = "Already have an account? Log In",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

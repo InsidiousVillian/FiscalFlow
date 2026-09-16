@@ -13,17 +13,21 @@ connection.
 
 ## Features
 
-- **Account & login** — local user accounts with sign-in / sign-up.
-- **Custom categories** — users create their own expense categories.
-- **Expenses with photos** — each expense captures amount, date, start
-  and end times, description, category and an optional photo of the
-  receipt or item.
-- **Monthly goals** — set a minimum and maximum monthly spend target and
-  track progress against it.
-- **Period-based totals** — pick a start and end date to see totals per
-  category over that range.
-- **Offline persistence** — all data lives in a local Room database, so
-  the app is fully usable without connectivity.
+- **Account & login** — local user accounts with sign-in / sign-up and active user session tracking.
+- **Custom categories** — users create and manage their own expense categories.
+- **Expenses & Income with photos** — each expense/income entry captures amount, date, description, category, and an optional photo of the receipt or item.
+- **Monthly goals** — set a minimum and maximum monthly spend target and track progress against it.
+- **Period-based totals** — pick a start and end date (This Week, This Month, or Custom) to see totals per category over that range.
+- **Offline persistence** — all data lives in a local Room database, so the app is fully usable without connectivity.
+
+## Recent Features & Enhancements
+
+- **Dual Income & Expense Logging**: Toggle between adding expenses and income entries with South African Rands (`R`) currency formatting across all screens and input fields.
+- **Sample Receipt Image Gallery**: Attach receipt photos directly from device storage or pick from a curated sample receipt gallery featuring titles below each thumbnail. Displays attached file names and full receipt previews.
+- **Dedicated Transactions Screen**: Overview of total spent, total income, and net balance, featuring real-time description search and category filtering.
+- **XP Ranks & Milestones Gamification**: Gamification system tracking XP points, active daily logging streaks (`🔥`), level ranks (*Budget Starter*, *Smart Saver*, *Expense Expert*, *Financial Master*), and unlocked milestone achievements.
+- **Profile Screen**: Personalized user profile display showing active logged-in username credentials and generated letter-avatar badges.
+- **Enlarged High-Contrast Typography**: All small text, input labels, hints, card metadata, and button labels are styled in bold, high-contrast, larger fonts for optimal readability.
 
 ## Tech stack
 
@@ -72,9 +76,8 @@ becomes a table in the SQLite database.
   primary key). Backs the login / sign-up flow.
 - **`CategoryEntity`** — a spending category (name, colour, owning
   user). Users add their own categories from the Categories screen.
-- **`Expense`** — a single spending record: amount, date, start &
-  end time, description, optional photo URI, and a foreign key to
-  the owning category.
+- **`Expense`** — a single spending/income record: amount, date, start &
+  end time, description, optional photo URI, foreign key to category, and `isIncome` boolean flag.
 - **`BudgetingGoal`** — the user's minimum and maximum monthly spend
   target for a given month.
 - **`UsersProgress`** — aggregated progress toward the current goal
@@ -110,14 +113,14 @@ shares one connection:
         UserEntity::class, CategoryEntity::class, Expense::class,
         BudgetingGoal::class, UsersProgress::class,
     ],
-    version = 1,
+    version = 2,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun categoryDao(): CategoryDao
     abstract fun expenseDao(): ExpenseDao
-    abstract fun budgetingGoalDao(): BudgetingGoalDao
-    abstract fun usersProgressDao(): UsersProgressDao
+    abstract fun budgetingGoalDao(): BudgetGoalDao
+    abstract fun usersProgressDao(): UserProgressDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -127,7 +130,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "fiscalflow.db",
-                ).build().also { INSTANCE = it }
+                )
+                .fallbackToDestructiveMigration()
+                .build().also { INSTANCE = it }
             }
     }
 }

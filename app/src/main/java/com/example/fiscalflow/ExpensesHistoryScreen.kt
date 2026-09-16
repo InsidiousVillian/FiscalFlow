@@ -140,12 +140,11 @@ fun ExpensesHistoryScreen(
             .background(HistoryLavender)
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
-    )
-    {
+    ) {
         // Screen Title
         Text(
             text = "Category Totals & Period Review",
-            fontSize = 26.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = HistoryDarkBlue
         )
@@ -154,23 +153,21 @@ fun ExpensesHistoryScreen(
 
         Text(
             text = "Review category budgets and totals across custom time periods",
-            fontSize = 13.sp,
+            fontSize = 15.sp,
             color = Color.DarkGray
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
-
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
-        )
-        {
+        ) {
             Column(modifier = Modifier.padding(18.dp)) {
                 Text(
                     text = "Select Review Period",
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = HistoryDarkBlue
                 )
@@ -180,8 +177,7 @@ fun ExpensesHistoryScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
-                )
-                {
+                ) {
                     PeriodChoiceButton(
                         label = "This Week",
                         selected = selectedPeriod == "week",
@@ -212,7 +208,7 @@ fun ExpensesHistoryScreen(
 
                 Text(
                     text = "Showing: $periodLabel ($rangeText)",
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AccentBlue
                 )
@@ -263,7 +259,6 @@ fun ExpensesHistoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -273,7 +268,7 @@ fun ExpensesHistoryScreen(
                 Text(
                     text = "Total Spent in Period",
                     color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
 
@@ -282,7 +277,7 @@ fun ExpensesHistoryScreen(
                 Text(
                     text = "R %.2f".format(total),
                     color = Color.White,
-                    fontSize = 32.sp,
+                    fontSize = 34.sp,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -290,18 +285,17 @@ fun ExpensesHistoryScreen(
 
                 Text(
                     text = "${filteredExpenses.size} expense entry(ies) in this timeframe",
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 13.sp
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 15.sp
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(22.dp))
 
-
         Text(
             text = "Category Breakdown",
-            fontSize = 20.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = HistoryDarkBlue
         )
@@ -317,6 +311,7 @@ fun ExpensesHistoryScreen(
                 Text(
                     text = "No expenses recorded for this time period.",
                     modifier = Modifier.padding(20.dp),
+                    fontSize = 15.sp,
                     color = Color.DarkGray
                 )
             }
@@ -359,7 +354,7 @@ fun ExpensesHistoryScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = category,
-                                    fontSize = 16.sp,
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = HistoryDarkBlue
                                 )
@@ -368,14 +363,14 @@ fun ExpensesHistoryScreen(
 
                                 Text(
                                     text = "%.1f%% of period total".format(categoryPercentage),
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     color = Color.Gray
                                 )
                             }
 
                             Text(
                                 text = "R %.2f".format(categoryTotal),
-                                fontSize = 17.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = HistoryDarkBlue
                             )
@@ -399,10 +394,9 @@ fun ExpensesHistoryScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-
         Text(
             text = "Expenses in Period",
-            fontSize = 20.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = HistoryDarkBlue
         )
@@ -418,6 +412,7 @@ fun ExpensesHistoryScreen(
                 Text(
                     text = "No expenses found for this time period.",
                     modifier = Modifier.padding(20.dp),
+                    fontSize = 15.sp,
                     color = Color.DarkGray
                 )
             }
@@ -430,18 +425,17 @@ fun ExpensesHistoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         Button(
             onClick = onBack,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
+                .height(50.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = HistoryDarkBlue)
         ) {
             Text(
                 text = "← Back to Category Goals",
-                fontSize = 15.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -461,19 +455,19 @@ private fun PeriodChoiceButton(
     if (selected) {
         Button(
             onClick = onClick,
-            modifier = modifier.height(42.dp),
+            modifier = modifier.height(44.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = HistoryDarkBlue)
         ) {
-            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
     } else {
         OutlinedButton(
             onClick = onClick,
-            modifier = modifier.height(42.dp),
+            modifier = modifier.height(44.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(label, fontSize = 12.sp)
+            Text(label, fontSize = 14.sp)
         }
     }
 }
@@ -497,14 +491,14 @@ private fun ExpenseHistoryCard(
             ) {
                 Text(
                     text = expense.category,
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = HistoryDarkBlue
                 )
 
                 Text(
                     text = "R %.2f".format(expense.amount),
-                    fontSize = 17.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFE57373)
                 )
@@ -514,7 +508,7 @@ private fun ExpenseHistoryCard(
 
             Text(
                 text = expense.description.ifBlank { "No description" },
-                fontSize = 13.sp,
+                fontSize = 15.sp,
                 color = Color.DarkGray
             )
 
@@ -522,7 +516,7 @@ private fun ExpenseHistoryCard(
 
             Text(
                 text = "${expense.startDate} – ${expense.endDate}",
-                fontSize = 11.sp,
+                fontSize = 14.sp,
                 color = Color.Gray
             )
 
@@ -532,7 +526,7 @@ private fun ExpenseHistoryCard(
                     onClick = { showReceipt = true },
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("📷 View Receipt", fontSize = 12.sp)
+                    Text("📷 View Receipt", fontSize = 14.sp)
                 }
             }
         }
@@ -541,7 +535,7 @@ private fun ExpenseHistoryCard(
     if (showReceipt && expense.photoUri != null) {
         AlertDialog(
             onDismissRequest = { showReceipt = false },
-            title = { Text("Receipt Photo") },
+            title = { Text("Receipt Photo", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
             text = {
                 AsyncImage(
                     model = expense.photoUri,
@@ -554,7 +548,7 @@ private fun ExpenseHistoryCard(
             },
             confirmButton = {
                 TextButton(onClick = { showReceipt = false }) {
-                    Text("Close")
+                    Text("Close", fontSize = 15.sp)
                 }
             }
         )
@@ -582,10 +576,10 @@ private fun DateSelector(
     ) {
         Text(
             text = title,
-            fontSize = 13.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             color = HistoryDarkBlue,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(44.dp)
         )
         SimpleHistoryDropdown(
             value = day.toString(),
@@ -623,7 +617,7 @@ private fun SimpleHistoryDropdown(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp)
         ) {
-            Text(value, fontSize = 12.sp)
+            Text(value, fontSize = 14.sp)
         }
         DropdownMenu(
             expanded = expanded,
@@ -631,7 +625,7 @@ private fun SimpleHistoryDropdown(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option, fontSize = 13.sp) },
+                    text = { Text(option, fontSize = 15.sp) },
                     onClick = {
                         onSelected(option)
                         expanded = false
