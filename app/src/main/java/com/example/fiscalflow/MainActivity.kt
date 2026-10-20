@@ -97,6 +97,8 @@ class MainActivity : ComponentActivity() {
                                 onTransactionsClick = { currentScreen = "transactions" },
                                 // Open Budget.
                                 onBudgetClick = { currentScreen = "budget" },
+                                // Open Progress Report.
+                                onProgressClick = { currentScreen = "progress" },
                                 // Open Goals.
                                 onGoalsClick = { currentScreen = "categories" },
                                 // Open XP & Milestones.
@@ -144,6 +146,16 @@ class MainActivity : ComponentActivity() {
                                     vm.addExpense(expense)
                                     currentScreen = "transactions"},
                                 onBack = { currentScreen = "transactions" }
+                            )
+                        }
+                        // Progress report
+                        "progress" -> {
+                            ProgressReportScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                expenses = expenses,
+                                categories = categories,
+                                budgetGoal = budgetGoal,
+                                onBackToDashboard = { currentScreen = "dashboard" }
                             )
                         }
                         //Budget screen
