@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
                 // Initial screen state
                 var currentScreen by remember { mutableStateOf("welcome") }
                 var loggedInUsername by remember { mutableStateOf("") }
+                var graphsReturnScreen by remember { mutableStateOf("dashboard") }
 
                 // Derived values recomputed automatically whenever expenses/goal change in the DB.
                 val totalSpent = expenses.sumOf { it.amount }
@@ -99,6 +100,11 @@ class MainActivity : ComponentActivity() {
                                 onBudgetClick = { currentScreen = "budget" },
                                 // Open Progress Report.
                                 onProgressClick = { currentScreen = "progress" },
+                                // Open spending graphs.
+                                onGraphsClick = {
+                                    graphsReturnScreen = "dashboard"
+                                    currentScreen = "graphs"
+                                },
                                 // Open Goals.
                                 onGoalsClick = { currentScreen = "categories" },
                                 // Open XP & Milestones.
@@ -134,6 +140,10 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onAddExpense = { currentScreen = "expense" },
                                 onViewHistory = { currentScreen = "history" },
+                                onViewGraphs = {
+                                    graphsReturnScreen = "categories"
+                                    currentScreen = "graphs"
+                                },
                                 onBackToDashboard = { currentScreen = "dashboard" }
                             )
                         }
@@ -167,6 +177,16 @@ class MainActivity : ComponentActivity() {
                             onGoalSaved = { goal ->vm.saveGoal(goal)},
                             onBack = {currentScreen = "dashboard"}
                         )
+                        // Spending graphs
+                        "graphs" -> {
+                            SpendingGraphsScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                expenses = expenses,
+                                categories = categories,
+                                budgetGoal = budgetGoal,
+                                onBack = { currentScreen = graphsReturnScreen }
+                            )
+                        }
                         //History screen
                         "history" -> {
                             ExpensesHistoryScreen(

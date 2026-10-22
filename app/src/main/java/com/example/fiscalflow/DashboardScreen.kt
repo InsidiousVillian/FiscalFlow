@@ -43,6 +43,7 @@ fun DashboardScreen(
     onTransactionsClick: () -> Unit,
     onBudgetClick: () -> Unit,
     onProgressClick: () -> Unit,
+    onGraphsClick: () -> Unit,
     onGoalsClick: () -> Unit,
     onGamificationClick: () -> Unit,
     onProfileClick: () -> Unit
@@ -318,6 +319,7 @@ fun DashboardScreen(
         DashboardButton("Transactions", onClick = onTransactionsClick)
         DashboardButton("Budget", onClick = onBudgetClick)
         DashboardButton("Progress Report", onClick = onProgressClick)
+        DashboardButton("Spending Graphs", onClick = onGraphsClick)
         DashboardButton("Goals", onClick = onGoalsClick)
         DashboardButton("XP & Milestones", onClick = onGamificationClick)
         DashboardButton("Profile", onClick = onProfileClick)
