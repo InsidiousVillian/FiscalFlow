@@ -159,6 +159,7 @@ class MainActivity : ComponentActivity() {
                             ProgressReportScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 expenses = expenses,
+                                categories = categories,
                                 budgetGoal = budgetGoal,
                                 onBackToDashboard = { currentScreen = "dashboard" }
                             )
@@ -169,7 +170,7 @@ class MainActivity : ComponentActivity() {
                                 expenses = expenses,
                                 categories = categories,
                                 budgetGoal = budgetGoal,
-                                onBackToDashboard = { currentScreen = "dashboard" }
+                                onBack = { currentScreen = "dashboard" }
                             )
                         }
                         //Budget screen
