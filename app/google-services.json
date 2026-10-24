@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "68008759199",
+    "project_id": "fiscalflow-3b829",
+    "storage_bucket": "fiscalflow-3b829.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68008759199:android:7e7036923ccb4d2c7177aa",
+        "android_client_info": {
+          "package_name": "com.example.fiscalflow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABbfHRwuQJmpardoWcmo3WXwzLKbYPUNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

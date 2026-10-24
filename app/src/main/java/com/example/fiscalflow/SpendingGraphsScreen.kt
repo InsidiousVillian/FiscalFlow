@@ -15,10 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-<<<<<<< HEAD
-=======
-import androidx.compose.foundation.verticalScroll
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -147,17 +144,8 @@ fun SpendingGraphsScreen(
         endDay, endMonth + 1, endYear
     )
 
-<<<<<<< HEAD
     ScrollableScreen(
         modifier = modifier.fillMaxSize()
-=======
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(GraphLavender)
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {

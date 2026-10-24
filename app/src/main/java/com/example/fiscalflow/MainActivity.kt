@@ -104,18 +104,12 @@ class MainActivity : ComponentActivity() {
                                 // Open Budget.
                                 onBudgetClick = { currentScreen = "budget" },
                                 // Open Progress Report.
-<<<<<<< HEAD
                                 onProgressReportClick = { currentScreen = "progress" },
                                 // Open Spending Graphs.
-                                onSpendingGraphsClick = { currentScreen = "graphs" },
-=======
-                                onProgressClick = { currentScreen = "progress" },
-                                // Open spending graphs.
-                                onGraphsClick = {
+                                onSpendingGraphsClick = {
                                     graphsReturnScreen = "dashboard"
                                     currentScreen = "graphs"
                                 },
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
                                 // Open Goals.
                                 onGoalsClick = { currentScreen = "categories" },
                                 // Open XP & Milestones.
@@ -169,10 +163,7 @@ class MainActivity : ComponentActivity() {
                                 onBack = { currentScreen = "transactions" }
                             )
                         }
-<<<<<<< HEAD
-=======
                         // Progress report
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
                         "progress" -> {
                             ProgressReportScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -182,18 +173,7 @@ class MainActivity : ComponentActivity() {
                                 onBackToDashboard = { currentScreen = "dashboard" }
                             )
                         }
-<<<<<<< HEAD
-                        "graphs" -> {
-                            SpendingGraphsScreen(
-                                modifier = Modifier.padding(innerPadding),
-                                expenses = expenses,
-                                categories = categories,
-                                budgetGoal = budgetGoal,
-                                onBack = { currentScreen = "dashboard" }
-                            )
-                        }
-=======
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
+
                         //Budget screen
                         "budget" -> BudgetingScreen(
                             modifier = Modifier.padding(innerPadding),

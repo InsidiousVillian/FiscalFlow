@@ -5,4 +5,5 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     // KSP is used by Room to generate DAO/database implementations at build time
     alias(libs.plugins.ksp) apply false
+    id("com.google.gms.google-services") version "4.5.0" apply false
 }

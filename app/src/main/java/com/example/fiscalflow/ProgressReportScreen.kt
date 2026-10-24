@@ -12,13 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-<<<<<<< HEAD
 import androidx.compose.foundation.shape.RoundedCornerShape
-=======
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -65,17 +59,8 @@ fun ProgressReportScreen(
     val overallProgress = calculateProgress(monthlySpent, maximum)
     val monthEmpty = monthItems.none { !it.isIncome }
 
-<<<<<<< HEAD
     ScrollableScreen(
         modifier = modifier.fillMaxSize()
-=======
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(ReportLavender)
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBackToDashboard) {

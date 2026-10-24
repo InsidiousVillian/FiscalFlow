@@ -53,13 +53,8 @@ fun DashboardScreen(
     expenses: List<Expense>,
     onTransactionsClick: () -> Unit,
     onBudgetClick: () -> Unit,
-<<<<<<< HEAD
     onProgressReportClick: () -> Unit,
     onSpendingGraphsClick: () -> Unit,
-=======
-    onProgressClick: () -> Unit,
-    onGraphsClick: () -> Unit,
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
     onGoalsClick: () -> Unit,
     onGamificationClick: () -> Unit,
     onProfileClick: () -> Unit
@@ -328,7 +323,6 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-<<<<<<< HEAD
         QuickAccessGrid(
             onTransactionsClick = onTransactionsClick,
             onBudgetClick = onBudgetClick,
@@ -338,16 +332,6 @@ fun DashboardScreen(
             onGamificationClick = onGamificationClick,
             onProfileClick = onProfileClick
         )
-=======
-        DashboardButton("Transactions", onClick = onTransactionsClick)
-        DashboardButton("Budget", onClick = onBudgetClick)
-        DashboardButton("Progress Report", onClick = onProgressClick)
-        DashboardButton("Spending Graphs", onClick = onGraphsClick)
-        DashboardButton("Goals", onClick = onGoalsClick)
-        DashboardButton("XP & Milestones", onClick = onGamificationClick)
-        DashboardButton("Profile", onClick = onProfileClick)
->>>>>>> 05452e1e983b2ead020a050e34c6e5f79105c961
-
         Spacer(modifier = Modifier.height(20.dp))
     }
 }
