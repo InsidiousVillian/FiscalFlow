@@ -66,6 +66,7 @@ fun CategoryScreen(
     onLogout: () -> Unit,
     onAddExpense: () -> Unit,
     onViewHistory: () -> Unit,
+    onViewGraphs: () -> Unit,
     onBackToDashboard: () -> Unit
 ) {
     var categoryName by remember { mutableStateOf("") }
@@ -189,6 +190,22 @@ fun CategoryScreen(
         ) {
             Text(
                 "Review Category Totals by Period",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = onViewGraphs,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text(
+                "Spending Graphs",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
