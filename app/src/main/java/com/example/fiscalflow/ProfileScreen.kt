@@ -40,11 +40,8 @@ fun ProfileScreen(
     onLogout: () -> Unit
 )
 {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(ProfileLavender)
-            .padding(20.dp),
+    ScrollableScreen(
+        modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     )
     {

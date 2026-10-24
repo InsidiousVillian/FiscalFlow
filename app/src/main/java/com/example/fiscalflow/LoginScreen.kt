@@ -1,7 +1,7 @@
 package com.example.fiscalflow
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,12 +43,13 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var loggingIn by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
+    ScrollableScreen(
+        modifier = modifier.fillMaxSize(),
+        fillViewport = true,
+        applyImePadding = true,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        contentPadding = PaddingValues(24.dp)
     ) {
         Text(
             text = "Welcome Back",

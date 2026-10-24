@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -117,10 +119,11 @@ fun GalleryScreen(
     onImageSelected: (title: String, imageUrl: String) -> Unit,
     onBack: () -> Unit
 ) {
+    val gridState = rememberLazyGridState()
+    RegisterGridScrollbar(gridState)
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(GalleryLavender)
             .padding(18.dp)
     ) {
         // Header
@@ -157,6 +160,7 @@ fun GalleryScreen(
 
         // Image Grid
         LazyVerticalGrid(
+            state = gridState,
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),

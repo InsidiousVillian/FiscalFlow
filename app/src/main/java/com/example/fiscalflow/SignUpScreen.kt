@@ -25,12 +25,13 @@ fun SignUpScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var submitting by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
+    ScrollableScreen(
+        modifier = modifier.fillMaxSize(),
+        fillViewport = true,
+        applyImePadding = true,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        contentPadding = PaddingValues(24.dp)
     ) {
         Text(
             text = "Create Account",

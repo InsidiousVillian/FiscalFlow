@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fiscalflow.ui.theme.FiscalFlowTheme
@@ -41,7 +42,11 @@ class MainActivity : ComponentActivity() {
                 val spendingProgress = budgetGoal?.let {
                     calculateProgress(totalSpent = totalSpent, maximum = it.maximum) } ?: 0f
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                ProvideAppScrollbar {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = Color.Transparent
+                    ) { innerPadding ->
                     when (currentScreen) {
                         // Welcome screen
                         "welcome" -> {
@@ -97,6 +102,10 @@ class MainActivity : ComponentActivity() {
                                 onTransactionsClick = { currentScreen = "transactions" },
                                 // Open Budget.
                                 onBudgetClick = { currentScreen = "budget" },
+                                // Open Progress Report.
+                                onProgressReportClick = { currentScreen = "progress" },
+                                // Open Spending Graphs.
+                                onSpendingGraphsClick = { currentScreen = "graphs" },
                                 // Open Goals.
                                 onGoalsClick = { currentScreen = "categories" },
                                 // Open XP & Milestones.
@@ -146,6 +155,23 @@ class MainActivity : ComponentActivity() {
                                 onBack = { currentScreen = "transactions" }
                             )
                         }
+                        "progress" -> {
+                            ProgressReportScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                expenses = expenses,
+                                budgetGoal = budgetGoal,
+                                onBackToDashboard = { currentScreen = "dashboard" }
+                            )
+                        }
+                        "graphs" -> {
+                            SpendingGraphsScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                expenses = expenses,
+                                categories = categories,
+                                budgetGoal = budgetGoal,
+                                onBackToDashboard = { currentScreen = "dashboard" }
+                            )
+                        }
                         //Budget screen
                         "budget" -> BudgetingScreen(
                             modifier = Modifier.padding(innerPadding),
@@ -188,6 +214,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+                    }
                     }
                 }
             }

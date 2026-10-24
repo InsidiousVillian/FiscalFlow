@@ -1,6 +1,7 @@
 package com.example.fiscalflow
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,17 +11,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +43,6 @@ import java.util.Locale
 
 // Theme colors for dashboard UI
 private val DashboardDarkBlue = Color(0xFF172A46)
-private val DashboardLavender = Color(0xFFEDEBFA)
 private val IncomeGreen = Color(0xFF15803D)
 private val ExpenseRed = Color(0xFFDC2626)
 
@@ -42,6 +53,8 @@ fun DashboardScreen(
     expenses: List<Expense>,
     onTransactionsClick: () -> Unit,
     onBudgetClick: () -> Unit,
+    onProgressReportClick: () -> Unit,
+    onSpendingGraphsClick: () -> Unit,
     onGoalsClick: () -> Unit,
     onGamificationClick: () -> Unit,
     onProfileClick: () -> Unit
@@ -107,12 +120,8 @@ fun DashboardScreen(
         catIdx++
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(DashboardLavender)
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
+    ScrollableScreen(
+        modifier = modifier.fillMaxSize()
     ) {
 
         Text(
@@ -314,11 +323,15 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        DashboardButton("Transactions", onClick = onTransactionsClick)
-        DashboardButton("Budget", onClick = onBudgetClick)
-        DashboardButton("Goals", onClick = onGoalsClick)
-        DashboardButton("XP & Milestones", onClick = onGamificationClick)
-        DashboardButton("Profile", onClick = onProfileClick)
+        QuickAccessGrid(
+            onTransactionsClick = onTransactionsClick,
+            onBudgetClick = onBudgetClick,
+            onProgressReportClick = onProgressReportClick,
+            onSpendingGraphsClick = onSpendingGraphsClick,
+            onGoalsClick = onGoalsClick,
+            onGamificationClick = onGamificationClick,
+            onProfileClick = onProfileClick
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
     }
@@ -332,15 +345,91 @@ private fun parseExpenseDate(dateStr: String, dateFormat: SimpleDateFormat): Dat
     }
 }
 
+private data class QuickAccessItem(
+    val label: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit
+)
+
 @Composable
-private fun DashboardButton(text: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 5.dp),
-        shape = RoundedCornerShape(16.dp)
+private fun QuickAccessGrid(
+    onTransactionsClick: () -> Unit,
+    onBudgetClick: () -> Unit,
+    onProgressReportClick: () -> Unit,
+    onSpendingGraphsClick: () -> Unit,
+    onGoalsClick: () -> Unit,
+    onGamificationClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
+    val items = listOf(
+        QuickAccessItem("Transactions", Icons.Filled.DirectionsCar, onTransactionsClick),
+        QuickAccessItem("Budget", Icons.Filled.ShoppingBag, onBudgetClick),
+        QuickAccessItem("Progress Report", Icons.Filled.Assessment, onProgressReportClick),
+        QuickAccessItem("Spending Graphs", Icons.Filled.ShowChart, onSpendingGraphsClick),
+        QuickAccessItem("Goals", Icons.Filled.GpsFixed, onGoalsClick),
+        QuickAccessItem("XP & Milestones", Icons.Filled.Star, onGamificationClick),
+        QuickAccessItem("Profile", Icons.Filled.Person, onProfileClick)
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items.chunked(2).forEach { pair ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                pair.forEach { item ->
+                    QuickAccessCard(
+                        item = item,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (pair.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickAccessCard(
+    item: QuickAccessItem,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.clickable(onClick = item.onClick),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Text(text, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFEEF2FF)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.label,
+                    tint = DashboardDarkBlue,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = item.label,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DashboardDarkBlue,
+                maxLines = 2
+            )
+        }
     }
 }

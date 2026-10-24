@@ -69,11 +69,8 @@ fun BudgetingScreen(
         remaining / daysRemaining
     } else 0.0
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(LightLavender)
-            .padding(20.dp)
+    ScrollableScreen(
+        modifier = modifier.fillMaxSize()
     )
     {
 
