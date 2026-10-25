@@ -1,10 +1,11 @@
 
 package com.example.fiscalflow
 
+import android.util.Base64
 import com.example.fiscalflow.data.AppDatabase
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.tasks.await
 
 object FiscalFlowCloudSync {
 
@@ -18,10 +19,12 @@ object FiscalFlowCloudSync {
         val expenses = database.expenseDao().observeAll().first()
         val budget = database.budgetGoalDao().observeCurrent().first()
 
-        for (category in categories) {
-            val categoryId = java.util.Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(category.name.toByteArray(Charsets.UTF_8))
+        for (category in categories)
+        {
+            val categoryId = Base64.encodeToString(
+                category.name.toByteArray(Charsets.UTF_8),
+                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+            )
 
             userRef.collection("categories")
                 .document(categoryId)
@@ -29,7 +32,8 @@ object FiscalFlowCloudSync {
                 .await()
         }
 
-        for (expense in expenses) {
+        for (expense in expenses)
+        {
             userRef.collection("expenses")
                 .document(expense.id.toString())
                 .set(
@@ -40,14 +44,15 @@ object FiscalFlowCloudSync {
                         "endDate" to expense.endDate,
                         "description" to expense.description,
                         "category" to expense.category,
-                        "photoUri" to null,
+                        "photoUri" to expense.photoUri,
                         "isIncome" to expense.isIncome
                     )
                 )
                 .await()
         }
 
-        if (budget != null) {
+        if (budget != null)
+        {
             userRef.collection("budget")
                 .document("current")
                 .set(
@@ -59,6 +64,44 @@ object FiscalFlowCloudSync {
                     )
                 )
                 .await()
+        }
+    }
+
+    suspend fun deleteCloudExpense(expenseId: Long) {
+        val uid = FirebaseIdentity.ensureSignedIn()
+
+        firestore.collection("users")
+            .document(uid)
+            .collection("expenses")
+            .document(expenseId.toString())
+            .delete()
+            .await()
+    }
+
+    suspend fun deleteCloudCategory(categoryName: String)
+    {
+        val uid = FirebaseIdentity.ensureSignedIn()
+
+        val categoryId = Base64.encodeToString(
+            categoryName.toByteArray(Charsets.UTF_8),
+            Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+        )
+
+        val userRef = firestore.collection("users").document(uid)
+
+        userRef.collection("categories")
+            .document(categoryId)
+            .delete()
+            .await()
+
+        val matchingExpenses = userRef.collection("expenses")
+            .whereEqualTo("category", categoryName)
+            .get()
+            .await()
+
+        for (expense in matchingExpenses.documents)
+        {
+            expense.reference.delete().await()
         }
     }
 }

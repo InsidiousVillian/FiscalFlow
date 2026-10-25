@@ -2,13 +2,13 @@
 package com.example.fiscalflow
 
 import android.app.Application
-import android.util.Log
+//import android.util.Log
 import com.example.fiscalflow.data.AppDatabase
 import com.example.fiscalflow.data.FiscalFlowRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+//import kotlinx.coroutines.launch
 
 class FiscalFlowApp : Application() {
 
@@ -28,7 +28,7 @@ class FiscalFlowApp : Application() {
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    fun syncLocalDataToCloud() {
+    /*fun syncLocalDataToCloud() {
         syncScope.launch {
             try {
                 FiscalFlowCloudSync.uploadLocalData(database)
@@ -37,5 +37,8 @@ class FiscalFlowApp : Application() {
                 Log.w("FiscalFlowCloudSync", "Upload failed; local data remains available", e)
             }
         }
+    }*/
+    fun syncLocalDataToCloud() {
+        FiscalFlowUploadWorker.schedule(this)
     }
 }

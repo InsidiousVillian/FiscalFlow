@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.coil.compose) // shows receipt photo preview
     // Material icons for nicer expense screen visuals
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 
     // Room: offline SQLite-backed database
     implementation(libs.androidx.room.runtime)

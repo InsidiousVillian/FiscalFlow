@@ -23,4 +23,9 @@ interface ExpenseDao {
 
     @Query("DELETE FROM expenses WHERE category = :categoryName")
     suspend fun deleteByCategory(categoryName: String)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM expenses WHERE id = :expenseId)")
+    suspend fun existsById(expenseId: Long): Boolean
+
+
 }
