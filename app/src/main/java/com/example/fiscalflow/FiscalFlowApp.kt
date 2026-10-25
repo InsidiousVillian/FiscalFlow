@@ -1,14 +1,20 @@
+
 package com.example.fiscalflow
 
 import android.app.Application
+import android.util.Log
 import com.example.fiscalflow.data.AppDatabase
 import com.example.fiscalflow.data.FiscalFlowRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
-// App application subclass initializing singletons like Room DB and repository.
 class FiscalFlowApp : Application() {
 
-    // Lazy load the database instance on first access
-    val database: AppDatabase by lazy { AppDatabase.get(this) }
+    val database: AppDatabase by lazy {
+        AppDatabase.get(this)
+    }
 
     val repository: FiscalFlowRepository by lazy {
         FiscalFlowRepository(
@@ -18,5 +24,18 @@ class FiscalFlowApp : Application() {
             budgetGoalDao = database.budgetGoalDao(),
             userProgressDao = database.userProgressDao()
         )
+    }
+
+    private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    fun syncLocalDataToCloud() {
+        syncScope.launch {
+            try {
+                FiscalFlowCloudSync.uploadLocalData(database)
+                Log.d("FiscalFlowCloudSync", "Upload completed")
+            } catch (e: Exception) {
+                Log.w("FiscalFlowCloudSync", "Upload failed; local data remains available", e)
+            }
+        }
     }
 }

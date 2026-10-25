@@ -11,7 +11,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Sign-up screen allowing users to register a new account.
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
@@ -83,22 +82,45 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+
         Button(
             enabled = !submitting,
             onClick = {
                 when {
-                    username.isBlank() || password.isBlank() ->
+                    //Ensure the all registration fields
+                    username.isBlank() ||
+                            password.isBlank() ||
+                            confirmPassword.isBlank() ->
                         errorMessage = "All fields are required"
-                    password != confirmPassword ->
+
+                   password != confirmPassword ->
                         errorMessage = "Passwords do not match"
+
                     else -> {
                         submitting = true
-                        onSignUp(username.trim(), password) { success ->
-                            submitting = false
-                            if (success) {
-                                onSignUpSuccess(username.trim())
+                        errorMessage = null
+                        //Register firebase account
+                        val firebaseEmail = if (username.trim().contains("@")) username.trim() else "${username.trim()}@fiscalflow.com"
+                        FirebaseAuthManager().register(
+                            email = firebaseEmail,
+                            password = password
+                        ) { firebaseSuccess, firebaseMessage ->
+
+                            if (firebaseSuccess) {
+                                //Allow for the local room database to be created too
+                                onSignUp(username.trim(), password) { success ->
+                                    submitting = false
+
+                                    if (success) {
+                                        onSignUpSuccess(username.trim())
+                                    } else {
+                                        errorMessage =
+                                            "Firebase account created, but local registration failed. Please try signing in or contact support."
+                                    }
+                                }
                             } else {
-                                errorMessage = "Username is already taken"
+                                submitting = false
+                                errorMessage = firebaseMessage
                             }
                         }
                     }
@@ -110,11 +132,12 @@ fun SignUpScreen(
             shape = RoundedCornerShape(14.dp)
         ) {
             Text(
-                text = if (submitting) "Creating…" else "Sign Up",
+                text = if (submitting) "Creating..." else "Sign Up",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
         }
+
 
         Spacer(modifier = Modifier.height(12.dp))
 

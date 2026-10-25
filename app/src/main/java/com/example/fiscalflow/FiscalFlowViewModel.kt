@@ -23,6 +23,9 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             repository.seedDefaultUserIfEmpty()
             repository.seedDefaultCategoriesIfEmpty()
+
+            // Upload local data after initialization
+            getApplication<FiscalFlowApp>().syncLocalDataToCloud()
         }
     }
 

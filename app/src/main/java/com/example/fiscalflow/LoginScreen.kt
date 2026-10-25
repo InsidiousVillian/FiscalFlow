@@ -59,6 +59,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Changing username to email address for firebase authentication
         OutlinedTextField(
             value = username,
             onValueChange = {
