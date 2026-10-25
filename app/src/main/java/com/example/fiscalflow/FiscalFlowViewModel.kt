@@ -18,14 +18,42 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
     private val repository: FiscalFlowRepository =
         (app as FiscalFlowApp).repository
 
-    init {
-        // Populate default account & categories if database is brand new
-        viewModelScope.launch {
-            repository.seedDefaultUserIfEmpty()
-            repository.seedDefaultCategoriesIfEmpty()
 
-            // Upload local data after initialization
-            getApplication<FiscalFlowApp>().syncLocalDataToCloud()
+    init {
+        viewModelScope.launch {
+            val app = getApplication<FiscalFlowApp>()
+
+            try {
+                val hasLocalData = app.hasLocalFinancialData()
+                val hasCloudBackup = app.hasCloudBackup()
+
+                when {
+                    // Restore the cloud copy only when this device
+                    // has no existing financial data.
+                    !hasLocalData && hasCloudBackup -> {
+                        app.restoreCloudData()
+                    }
+
+                    // Keep local data and upload it when available.
+                    hasLocalData -> {
+                        app.syncLocalDataToCloud()
+                    }
+
+                    // Brand-new installation with no cloud backup.
+                    else -> {
+                        repository.seedDefaultUserIfEmpty()
+                        repository.seedDefaultCategoriesIfEmpty()
+                        app.syncLocalDataToCloud()
+                    }
+                }
+            } catch (e: Exception) {
+                // Keep the app usable if the internet or cloud is unavailable.
+                android.util.Log.w(
+                    "FiscalFlowViewModel",
+                    "Startup sync failed; keeping local data available",
+                    e
+                )
+            }
         }
     }
 
@@ -52,28 +80,69 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
 
     fun addCategory(name: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
-            onResult(repository.addCategory(name))
+            val added = repository.addCategory(name)
+            if (added) {
+                getApplication<FiscalFlowApp>().syncLocalDataToCloud()
+            }
+            onResult(added)
         }
     }
 
     fun deleteCategory(category: String) {
         viewModelScope.launch {
-            repository.deleteCategory(category)
+            val app = getApplication<FiscalFlowApp>()
+
+            try {
+                // Remove the category and its associated expenses from Room.
+                repository.deleteCategory(category)
+
+                // Remove the same category and its associated expenses from Firebase.
+                FiscalFlowCloudSync.deleteCloudCategory(category)
+
+                // Upload the remaining local records.
+                app.syncLocalDataToCloud()
+            } catch (e: Exception) {
+                // Preserve local deletion even if cloud access fails.
+                android.util.Log.w(
+                    "FiscalFlowViewModel",
+                    "Category deleted locally; cloud deletion needs retry",
+                    e
+                )
+
+                // Queue an upload attempt when a network connection is available.
+                app.syncLocalDataToCloud()
+            }
         }
     }
 
     fun addExpense(expense: Expense) {
-        viewModelScope.launch { repository.addExpense(expense) }
+        viewModelScope.launch {
+            repository.addExpense(expense)
+            getApplication<FiscalFlowApp>().syncLocalDataToCloud()
+        }
     }
 
     fun saveGoal(goal: BudgetingGoal) {
         viewModelScope.launch {
             repository.saveGoal(goal)
+
             // Reward 10 XP whenever a new target budget is saved
             val current = userProgress.value
             repository.saveProgress(current.copy(xp = current.xp + 10))
+
+            getApplication<FiscalFlowApp>().syncLocalDataToCloud()
         }
     }
+
+    fun deleteExpense(expense: Expense) {
+        viewModelScope.launch {
+            repository.deleteExpense(expense)
+
+            // Attempt to sync after the local deletion.
+            getApplication<FiscalFlowApp>().syncLocalDataToCloud()
+        }
+    }
+
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

@@ -106,4 +106,9 @@ class FiscalFlowRepository(
     suspend fun saveProgress(progress: UsersProgress) {
         userProgressDao.upsert(progress.copy(id = UsersProgress.SINGLE_ROW_ID))
     }
+
+    suspend fun deleteExpense(expense: Expense) {
+        expenseDao.delete(expense)
+        Log.d(tag, "deleteExpense: removed expense id=${expense.id}")
+    }
 }

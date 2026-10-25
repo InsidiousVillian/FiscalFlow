@@ -104,4 +104,96 @@ object FiscalFlowCloudSync {
             expense.reference.delete().await()
         }
     }
+
+    suspend fun hasCloudData(): Boolean {
+        val uid = FirebaseIdentity.ensureSignedIn()
+        val userRef = firestore.collection("users").document(uid)
+
+        val categories = userRef.collection("categories")
+            .limit(1)
+            .get()
+            .await()
+
+        if (!categories.isEmpty) return true
+
+        val expenses = userRef.collection("expenses")
+            .limit(1)
+            .get()
+            .await()
+
+        if (!expenses.isEmpty) return true
+
+        val budget = userRef.collection("budget")
+            .document("current")
+            .get()
+            .await()
+
+        return budget.exists()
+    }
+
+    suspend fun restoreCloudData(database: AppDatabase) {
+        val uid = FirebaseIdentity.ensureSignedIn()
+        val userRef = firestore.collection("users").document(uid)
+
+        val hasBackup = hasCloudData()
+        if (!hasBackup) return
+
+        val categories = userRef.collection("categories").get().await()
+        for (document in categories.documents) {
+            val name = document.getString("name") ?: continue
+            database.categoryDao().insert(
+                com.example.fiscalflow.CategoryEntity(name)
+            )
+        }
+
+        val expenses = userRef.collection("expenses").get().await()
+        for (document in expenses.documents) {
+            val id = document.getLong("id") ?: continue
+            val amount = document.getDouble("amount") ?: continue
+            val startDate = document.getString("startDate") ?: continue
+            val endDate = document.getString("endDate") ?: continue
+            val description = document.getString("description") ?: ""
+            val category = document.getString("category") ?: continue
+            val photoUri = document.getString("photoUri")
+            val isIncome = document.getBoolean("isIncome") ?: false
+
+            database.expenseDao().restoreExpense(
+                com.example.fiscalflow.Expense(
+                    id = id,
+                    amount = amount,
+                    startDate = startDate,
+                    endDate = endDate,
+                    description = description,
+                    category = category,
+                    photoUri = photoUri,
+                    isIncome = isIncome
+                )
+            )
+        }
+
+        val budgetDocument = userRef.collection("budget")
+            .document("current")
+            .get()
+            .await()
+
+        if (budgetDocument.exists()) {
+            val minimum = budgetDocument.getDouble("minimum")
+            val maximum = budgetDocument.getDouble("maximum")
+            val month = budgetDocument.getLong("month")
+            val year = budgetDocument.getLong("year")
+
+            if (minimum != null && maximum != null &&
+                month != null && year != null
+            ) {
+                database.budgetGoalDao().upsert(
+                    com.example.fiscalflow.BudgetingGoal(
+                        minimum = minimum,
+                        maximum = maximum,
+                        month = month.toInt(),
+                        year = year.toInt()
+                    )
+                )
+            }
+        }
+    }
 }

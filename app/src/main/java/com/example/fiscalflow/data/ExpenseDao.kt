@@ -27,5 +27,10 @@ interface ExpenseDao {
     @Query("SELECT EXISTS(SELECT 1 FROM expenses WHERE id = :expenseId)")
     suspend fun existsById(expenseId: Long): Boolean
 
+    @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
+    suspend fun restoreExpense(expense: Expense)
+
+    @Query("SELECT COUNT(*) FROM expenses")
+    suspend fun count(): Int
 
 }

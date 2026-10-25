@@ -41,4 +41,21 @@ class FiscalFlowApp : Application() {
     fun syncLocalDataToCloud() {
         FiscalFlowUploadWorker.schedule(this)
     }
+
+    override fun onCreate() {
+        super.onCreate()
+        FiscalFlowNetworkSync.schedulePeriodicSync(this)
+    }
+    suspend fun hasCloudBackup(): Boolean {
+        return FiscalFlowCloudSync.hasCloudData()
+    }
+
+    suspend fun hasLocalFinancialData(): Boolean {
+        return database.expenseDao().count() > 0 ||
+                database.categoryDao().count() > 0 ||
+                database.budgetGoalDao().hasGoal()
+    }
+    suspend fun restoreCloudData() {
+        FiscalFlowCloudSync.restoreCloudData(database)
+    }
 }

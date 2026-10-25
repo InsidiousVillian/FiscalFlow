@@ -16,4 +16,8 @@ interface BudgetGoalDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(goal: BudgetingGoal)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM budget_goal)")
+    suspend fun hasGoal(): Boolean
+
 }
