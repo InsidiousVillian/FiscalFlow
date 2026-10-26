@@ -55,6 +55,7 @@ fun TransactionsScreen(
     categories: List<String>,
     onDeleteExpense: (Expense) -> Unit = {},
     onAddExpense: () -> Unit = {},
+    onManageCategories: () -> Unit = {},
     onBackToDashboard: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -426,6 +427,24 @@ fun TransactionsScreen(
         ) {
             Text(
                 text = "+ Add Transaction (Expense / Income)",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Button(
+            onClick = onManageCategories,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = TransactionDarkBlue)
+        ) {
+            Text(
+                text = "📁 Manage Categories",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White

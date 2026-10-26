@@ -126,6 +126,7 @@ class MainActivity : ComponentActivity() {
                                 categories = categories,
                                 onDeleteExpense = { expense -> vm.deleteExpense(expense) },
                                 onAddExpense = { currentScreen = "expense" },
+                                onManageCategories = { currentScreen = "categories" },
                                 onBackToDashboard = { currentScreen = "dashboard" }
                             )
                         }
