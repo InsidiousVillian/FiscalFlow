@@ -14,5 +14,6 @@ data class Expense(
     val description: String,       // description/title
     val category: String,          // category name
     val photoUri: String? = null,  // optional receipt image URI
-    val isIncome: Boolean = false  // false = Expense, true = Income
+    val isIncome: Boolean = false, // false = Expense, true = Income
+    val ownerUsername: String = "unassigned_legacy" // account that owns this record
 )

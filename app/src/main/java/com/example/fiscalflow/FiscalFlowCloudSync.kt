@@ -1,4 +1,3 @@
-
 package com.example.fiscalflow
 
 import android.util.Base64
@@ -15,12 +14,11 @@ object FiscalFlowCloudSync {
         val uid = FirebaseIdentity.ensureSignedIn()
         val userRef = firestore.collection("users").document(uid)
 
-        val categories = database.categoryDao().observeAll().first()
-        val expenses = database.expenseDao().observeAll().first()
-        val budget = database.budgetGoalDao().observeCurrent().first()
+        val categories = database.categoryDao().observeAll("unassigned_legacy").first()
+        val expenses = database.expenseDao().observeAll("unassigned_legacy").first()
+        val budget = database.budgetGoalDao().observeCurrent("unassigned_legacy").first()
 
-        for (category in categories)
-        {
+        for (category in categories) {
             val categoryId = Base64.encodeToString(
                 category.name.toByteArray(Charsets.UTF_8),
                 Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
@@ -32,8 +30,7 @@ object FiscalFlowCloudSync {
                 .await()
         }
 
-        for (expense in expenses)
-        {
+        for (expense in expenses) {
             userRef.collection("expenses")
                 .document(expense.id.toString())
                 .set(
@@ -51,8 +48,7 @@ object FiscalFlowCloudSync {
                 .await()
         }
 
-        if (budget != null)
-        {
+        if (budget != null) {
             userRef.collection("budget")
                 .document("current")
                 .set(
@@ -78,8 +74,7 @@ object FiscalFlowCloudSync {
             .await()
     }
 
-    suspend fun deleteCloudCategory(categoryName: String)
-    {
+    suspend fun deleteCloudCategory(categoryName: String) {
         val uid = FirebaseIdentity.ensureSignedIn()
 
         val categoryId = Base64.encodeToString(
@@ -99,8 +94,7 @@ object FiscalFlowCloudSync {
             .get()
             .await()
 
-        for (expense in matchingExpenses.documents)
-        {
+        for (expense in matchingExpenses.documents) {
             expense.reference.delete().await()
         }
     }
@@ -142,7 +136,7 @@ object FiscalFlowCloudSync {
         for (document in categories.documents) {
             val name = document.getString("name") ?: continue
             database.categoryDao().insert(
-                com.example.fiscalflow.CategoryEntity(name)
+                CategoryEntity(name)
             )
         }
 
@@ -158,7 +152,7 @@ object FiscalFlowCloudSync {
             val isIncome = document.getBoolean("isIncome") ?: false
 
             database.expenseDao().restoreExpense(
-                com.example.fiscalflow.Expense(
+                Expense(
                     id = id,
                     amount = amount,
                     startDate = startDate,
@@ -186,7 +180,7 @@ object FiscalFlowCloudSync {
                 month != null && year != null
             ) {
                 database.budgetGoalDao().upsert(
-                    com.example.fiscalflow.BudgetingGoal(
+                    BudgetingGoal(
                         minimum = minimum,
                         maximum = maximum,
                         month = month.toInt(),

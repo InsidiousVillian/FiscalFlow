@@ -8,5 +8,6 @@ import androidx.room.PrimaryKey
 data class UserEntity(
     @PrimaryKey
     val username: String,
-    val password: String
+    val password: String,
+    val firebaseUid: String? = null
 )

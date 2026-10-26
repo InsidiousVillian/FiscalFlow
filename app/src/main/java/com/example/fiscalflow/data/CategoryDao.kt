@@ -11,17 +11,18 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CategoryDao {
 
-    // Emits live updates whenever category records change
-    @Query("SELECT * FROM categories ORDER BY name COLLATE NOCASE ASC")
-    fun observeAll(): Flow<List<CategoryEntity>>
+    @Query("SELECT * FROM categories WHERE ownerUsername = :ownerUsername COLLATE NOCASE ORDER BY name COLLATE NOCASE ASC")
+    fun observeAll(ownerUsername: String): Flow<List<CategoryEntity>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(category: CategoryEntity): Long
 
-    @Query("DELETE FROM categories WHERE name = :categoryName")
-    suspend fun deleteByName(categoryName: String)
+    @Query("DELETE FROM categories WHERE ownerUsername = :ownerUsername COLLATE NOCASE AND name = :categoryName")
+    suspend fun deleteByName(ownerUsername: String, categoryName: String)
 
-    @Query("SELECT COUNT(*) FROM categories")
-    suspend fun count(): Int
+    @Query("SELECT COUNT(*) FROM categories WHERE ownerUsername = :ownerUsername COLLATE NOCASE")
+    suspend fun count(ownerUsername: String): Int
 
+    @Query("SELECT * FROM categories WHERE ownerUsername = :ownerUsername COLLATE NOCASE AND name = :categoryName LIMIT 1")
+    suspend fun getByName(ownerUsername: String, categoryName: String): CategoryEntity?
 }

@@ -1,14 +1,12 @@
-
 package com.example.fiscalflow
 
 import android.app.Application
-//import android.util.Log
+import android.content.Context
 import com.example.fiscalflow.data.AppDatabase
 import com.example.fiscalflow.data.FiscalFlowRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-//import kotlinx.coroutines.launch
 
 class FiscalFlowApp : Application() {
 
@@ -22,40 +20,41 @@ class FiscalFlowApp : Application() {
             categoryDao = database.categoryDao(),
             expenseDao = database.expenseDao(),
             budgetGoalDao = database.budgetGoalDao(),
-            userProgressDao = database.userProgressDao()
+            userProgressDao = database.userProgressDao(),
+            prefs = getSharedPreferences("fiscalflow_prefs", MODE_PRIVATE)
         )
     }
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    /*fun syncLocalDataToCloud() {
-        syncScope.launch {
-            try {
-                FiscalFlowCloudSync.uploadLocalData(database)
-                Log.d("FiscalFlowCloudSync", "Upload completed")
-            } catch (e: Exception) {
-                Log.w("FiscalFlowCloudSync", "Upload failed; local data remains available", e)
-            }
-        }
-    }*/
     fun syncLocalDataToCloud() {
+        if (!IS_CLOUD_SYNC_ENABLED) return
         FiscalFlowUploadWorker.schedule(this)
     }
 
     override fun onCreate() {
         super.onCreate()
-        FiscalFlowNetworkSync.schedulePeriodicSync(this)
     }
+
     suspend fun hasCloudBackup(): Boolean {
+        if (!IS_CLOUD_SYNC_ENABLED) return false
         return FiscalFlowCloudSync.hasCloudData()
     }
 
-    suspend fun hasLocalFinancialData(): Boolean {
-        return database.expenseDao().count() > 0 ||
-                database.categoryDao().count() > 0 ||
-                database.budgetGoalDao().hasGoal()
+    suspend fun hasLocalFinancialData(ownerUsername: String = ""): Boolean {
+        val activeOwner = ownerUsername.ifBlank { repository.activeUsername.value.orEmpty() }.trim()
+        val queryOwner = if (activeOwner.isBlank()) "unassigned_legacy" else activeOwner
+        return (database.expenseDao().count(queryOwner) > 0) ||
+                (database.categoryDao().count(queryOwner) > 0) ||
+                database.budgetGoalDao().hasGoal(queryOwner)
     }
+
     suspend fun restoreCloudData() {
+        if (!IS_CLOUD_SYNC_ENABLED) return
         FiscalFlowCloudSync.restoreCloudData(database)
+    }
+
+    companion object {
+        const val IS_CLOUD_SYNC_ENABLED = false
     }
 }

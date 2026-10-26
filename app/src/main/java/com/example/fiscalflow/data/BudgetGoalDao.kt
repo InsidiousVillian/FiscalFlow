@@ -11,13 +11,12 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface BudgetGoalDao {
 
-    @Query("SELECT * FROM budget_goal WHERE id = ${BudgetingGoal.SINGLE_ROW_ID} LIMIT 1")
-    fun observeCurrent(): Flow<BudgetingGoal?>
+    @Query("SELECT * FROM budget_goal WHERE ownerUsername = :ownerUsername COLLATE NOCASE AND id = ${BudgetingGoal.SINGLE_ROW_ID} LIMIT 1")
+    fun observeCurrent(ownerUsername: String): Flow<BudgetingGoal?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(goal: BudgetingGoal)
 
-    @Query("SELECT EXISTS(SELECT 1 FROM budget_goal)")
-    suspend fun hasGoal(): Boolean
-
+    @Query("SELECT EXISTS(SELECT 1 FROM budget_goal WHERE ownerUsername = :ownerUsername COLLATE NOCASE)")
+    suspend fun hasGoal(ownerUsername: String): Boolean
 }

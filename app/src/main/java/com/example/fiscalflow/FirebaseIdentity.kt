@@ -1,14 +1,29 @@
-
 package com.example.fiscalflow
 
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object FirebaseIdentity {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+
+    fun firebaseEmail(username: String): String {
+        val trimmed = username.trim()
+        if (trimmed.contains("@")) {
+            return trimmed.lowercase(Locale.ROOT)
+        }
+        val normalized = trimmed.lowercase(Locale.ROOT)
+        return "$normalized@fiscalflow.com"
+    }
+
+    fun currentUid(): String? = auth.currentUser?.uid
+
+    fun signOut() {
+        auth.signOut()
+    }
 
     suspend fun ensureSignedIn(): String {
         val currentUser = auth.currentUser
