@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -22,6 +24,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -55,12 +60,15 @@ fun TransactionsScreen(
     categories: List<String>,
     onAddExpense: () -> Unit = {},
     onBackToDashboard: () -> Unit = {},
-    onManageCategories: () -> Unit = {}
+    onManageCategories: () -> Unit = {},
+    onDeleteExpense: (Expense) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoryFilter by remember { mutableStateOf("All") }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     var selectedReceiptUri by remember { mutableStateOf<String?>(null) }
+    var pendingExpenseToDelete by remember { mutableStateOf<Expense?>(null) }
+    var deletionErrorMessage by remember { mutableStateOf<String?>(null) }
 
     // Calculate total spent and total income using a while loop
     var totalSpent = 0.0
@@ -397,6 +405,18 @@ fun TransactionsScreen(
                             fontWeight = FontWeight.Bold,
                             color = if (expense.isIncome) IncomeGreen else ExpenseRed
                         )
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        IconButton(
+                            onClick = { pendingExpenseToDelete = expense }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete transaction",
+                                tint = ExpenseRed
+                            )
+                        }
                     }
                 }
             }
@@ -477,6 +497,66 @@ fun TransactionsScreen(
             confirmButton = {
                 TextButton(onClick = { selectedReceiptUri = null }) {
                     Text("Close", fontSize = 15.sp)
+                }
+            }
+        )
+    }
+
+    if (pendingExpenseToDelete != null) {
+        val target = pendingExpenseToDelete!!
+        val transactionName = target.description.ifBlank { target.category }
+        val formattedAmount = "R %.2f".format(target.amount)
+        AlertDialog(
+            onDismissRequest = { pendingExpenseToDelete = null },
+            title = {
+                Text(
+                    text = "Delete Transaction?",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete '$transactionName' ($formattedAmount)? This cannot be undone.",
+                    fontSize = 15.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val toDelete = pendingExpenseToDelete
+                        pendingExpenseToDelete = null
+                        if (toDelete != null) {
+                            try {
+                                onDeleteExpense(toDelete)
+                            } catch (e: Exception) {
+                                deletionErrorMessage = "Failed to delete transaction: ${e.localizedMessage ?: "Unknown error"}"
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { pendingExpenseToDelete = null }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (deletionErrorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { deletionErrorMessage = null },
+            title = { Text("Error", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+            text = { Text(deletionErrorMessage!!, fontSize = 15.sp) },
+            confirmButton = {
+                TextButton(onClick = { deletionErrorMessage = null }) {
+                    Text("OK", fontSize = 15.sp)
                 }
             }
         )

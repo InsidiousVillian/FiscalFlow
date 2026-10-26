@@ -126,6 +126,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 expenses = expenses,
                                 categories = categories,
+                                onDeleteExpense = { expense -> vm.deleteExpense(expense) },
                                 onAddExpense = { currentScreen = "expense" },
                                 onBackToDashboard = { currentScreen = "dashboard" },
                                 onManageCategories = { currentScreen = "categories"}

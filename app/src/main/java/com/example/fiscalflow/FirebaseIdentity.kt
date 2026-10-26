@@ -8,15 +8,14 @@ import java.util.Locale
 object FirebaseIdentity {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    // Create a consistent internal identifier for Firebase not an email
-    private fun firebaseEmail(username: String): String {
-        val normalized = username.trim().lowercase(Locale.ROOT)
-        require(normalized.matches(Regex("[a-z0-9._-]{3,30}"))) {
-            "Username must be 3–30 characters and use letters, numbers, dots, underscores or hyphens."
+    // Create a consistent internal identifier for Firebase
+    fun firebaseEmail(username: String): String {
+        val trimmed = username.trim()
+        if (trimmed.contains("@")) {
+            return trimmed.lowercase(Locale.ROOT)
         }
-
-        return "$normalized@fiscalflow.com" // Match the existing Firebase account format
-
+        val normalized = trimmed.lowercase(Locale.ROOT)
+        return "$normalized@fiscalflow.com"
     }
 
     // Return the current Firebase UID without creating or switching accounts.

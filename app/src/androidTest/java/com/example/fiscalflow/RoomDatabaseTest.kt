@@ -2,6 +2,7 @@ package com.example.fiscalflow
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.withTransaction
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.fiscalflow.data.AppDatabase
@@ -165,6 +166,23 @@ class RoomDatabaseTest {
             listOf("first_expense", "first_goal", "week_streak"),
             loaded.milestones
         )
+    }
+
+    // Verifies that database.withTransaction rolls back all inserted records if an exception occurs mid-transaction.
+    @Test
+    fun database_withTransaction_rollsBackOnException() = runBlocking {
+        val category = CategoryEntity("Travel", ownerUsername = "alice")
+        try {
+            db.withTransaction {
+                categoryDao.insert(category)
+                throw RuntimeException("Simulated failure during restore transaction")
+            }
+        } catch (e: RuntimeException) {
+            assertEquals("Simulated failure during restore transaction", e.message)
+        }
+
+        // Verify that the category insertion was rolled back completely
+        assertEquals(0, categoryDao.count("alice"))
     }
 
     // Bonus check: open the REAL (non-in-memory) production database via AppDatabase.get()

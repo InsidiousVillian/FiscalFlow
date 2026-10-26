@@ -100,6 +100,7 @@ fun SignUpScreen(
                         submitting = true
                         errorMessage = null
                         //Register firebase account
+                        val firebaseEmail = FirebaseIdentity.firebaseEmail(username.trim())
                         FirebaseAuthManager().register(
                             email = firebaseEmail,
                             password = password

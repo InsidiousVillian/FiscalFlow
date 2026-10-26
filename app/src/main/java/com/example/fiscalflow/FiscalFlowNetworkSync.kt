@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit
 object FiscalFlowNetworkSync {
 
     fun schedulePeriodicSync(context: Context) {
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return
+
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()

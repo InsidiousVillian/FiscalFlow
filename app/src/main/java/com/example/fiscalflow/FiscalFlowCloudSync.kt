@@ -1,6 +1,7 @@
 package com.example.fiscalflow
 
 import android.util.Base64
+import androidx.room.withTransaction
 import com.example.fiscalflow.data.AppDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.first
@@ -8,7 +9,7 @@ import kotlinx.coroutines.tasks.await
 
 object FiscalFlowCloudSync {
 
-    private val firestore = FirebaseFirestore.getInstance()
+    private val firestore by lazy { FirebaseFirestore.getInstance() }
 
     // Reject cloud access unless the signed-in Firebase UID matches the UID saved for the requested local account
     private suspend fun requireVerifiedUid(
@@ -36,6 +37,7 @@ object FiscalFlowCloudSync {
     }
 
     suspend fun uploadLocalData(database: AppDatabase, ownerUsername: String){
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return
 
         val uid = requireVerifiedUid(database, ownerUsername)
         val userRef = firestore.collection("users").document(uid)
@@ -90,6 +92,7 @@ object FiscalFlowCloudSync {
     }
 
     suspend fun deleteCloudExpense(expenseId: Long, uid: String) {
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return
 
         firestore.collection("users")
             .document(uid)
@@ -104,6 +107,8 @@ object FiscalFlowCloudSync {
         database: AppDatabase,
         ownerUsername: String
     ) {
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return
+
         // Verify once and keep the UID for all queued operations
         val uid = requireVerifiedUid(database, ownerUsername)
         // Keep queued changes belonging to other accounts untouched
@@ -251,6 +256,8 @@ object FiscalFlowCloudSync {
     }
 
     suspend fun deleteCloudCategory(categoryName: String, uid: String) {
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return
+
         val categoryId = Base64.encodeToString(
             categoryName.toByteArray(Charsets.UTF_8),
             Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
@@ -264,6 +271,8 @@ object FiscalFlowCloudSync {
     }
 
     suspend fun hasCloudData(uid: String): Boolean {
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return false
+
         val userRef = firestore.collection("users").document(uid)
 
         val categories = userRef.collection("categories")
@@ -300,11 +309,14 @@ object FiscalFlowCloudSync {
         database: AppDatabase,
         ownerUsername: String
     ): Boolean {
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return false
         val uid = requireVerifiedUid(database, ownerUsername)
         return hasCloudData(uid)
     }
 
     suspend fun restoreCloudData(database: AppDatabase, ownerUsername: String) {
+        if (!FiscalFlowApp.IS_CLOUD_SYNC_ENABLED) return
+
         val uid = requireVerifiedUid(database, ownerUsername)
 
         // Stop restore if this account already has local data
@@ -333,11 +345,12 @@ object FiscalFlowCloudSync {
         val hasBackup = hasCloudData(uid)
         if (!hasBackup) return
 
-        val categories = userRef.collection("categories").get().await()
-        for (document in categories.documents) {
+        // Fetch all cloud data into memory before initiating any local database writes
+        val categoriesSnapshot = userRef.collection("categories").get().await()
+        val categoriesToRestore = mutableListOf<CategoryEntity>()
+        for (document in categoriesSnapshot.documents) {
             val name = document.getString("name") ?: continue
-
-            database.categoryDao().insert(
+            categoriesToRestore.add(
                 CategoryEntity(
                     name = name,
                     ownerUsername = ownerUsername
@@ -345,8 +358,9 @@ object FiscalFlowCloudSync {
             )
         }
 
-        val expenses = userRef.collection("expenses").get().await()
-        for (document in expenses.documents) {
+        val expensesSnapshot = userRef.collection("expenses").get().await()
+        val expensesToRestore = mutableListOf<Expense>()
+        for (document in expensesSnapshot.documents) {
             val id = document.getLong("id") ?: continue
             val amount = document.getDouble("amount") ?: continue
             val startDate = document.getString("startDate") ?: continue
@@ -356,7 +370,7 @@ object FiscalFlowCloudSync {
             val photoUri = document.getString("photoUri")
             val isIncome = document.getBoolean("isIncome") ?: false
 
-            database.expenseDao().restoreExpense(
+            expensesToRestore.add(
                 Expense(
                     id = id,
                     amount = amount,
@@ -376,7 +390,7 @@ object FiscalFlowCloudSync {
             .get()
             .await()
 
-        if (budgetDocument.exists()) {
+        val budgetToRestore: BudgetingGoal? = if (budgetDocument.exists()) {
             val minimum = budgetDocument.getDouble("minimum")
             val maximum = budgetDocument.getDouble("maximum")
             val month = budgetDocument.getLong("month")
@@ -388,17 +402,15 @@ object FiscalFlowCloudSync {
                 month != null &&
                 year != null
             ) {
-                database.budgetGoalDao().upsert(
-                    BudgetingGoal(
-                        minimum = minimum,
-                        maximum = maximum,
-                        month = month.toInt(),
-                        year = year.toInt(),
-                        ownerUsername = ownerUsername
-                    )
+                BudgetingGoal(
+                    minimum = minimum,
+                    maximum = maximum,
+                    month = month.toInt(),
+                    year = year.toInt(),
+                    ownerUsername = ownerUsername
                 )
-            }
-        }
+            } else null
+        } else null
 
         // Restore XP, streak and milestones from the cloud backup.
         val progressDocument = userRef.collection("progress")
@@ -406,20 +418,37 @@ object FiscalFlowCloudSync {
             .get()
             .await()
 
-        if (progressDocument.exists()) {
+        val progressToRestore: UsersProgress? = if (progressDocument.exists()) {
             val xp = progressDocument.getLong("xp")?.toInt() ?: 0
             val streak = progressDocument.getLong("streak")?.toInt() ?: 0
             val milestonesRaw =
                 progressDocument.getString("milestonesRaw") ?: ""
 
-            database.userProgressDao().upsert(
-                UsersProgress(
-                    xp = xp,
-                    streak = streak,
-                    milestonesRaw = milestonesRaw,
-                    ownerUsername = ownerUsername
-                )
+            UsersProgress(
+                xp = xp,
+                streak = streak,
+                milestonesRaw = milestonesRaw,
+                ownerUsername = ownerUsername
             )
+        } else null
+
+        // Execute all Room insertions atomically within a single transaction
+        database.withTransaction {
+            for (category in categoriesToRestore) {
+                database.categoryDao().insert(category)
+            }
+
+            for (expense in expensesToRestore) {
+                database.expenseDao().restoreExpense(expense)
+            }
+
+            if (budgetToRestore != null) {
+                database.budgetGoalDao().upsert(budgetToRestore)
+            }
+
+            if (progressToRestore != null) {
+                database.userProgressDao().upsert(progressToRestore)
+            }
         }
     }
     }

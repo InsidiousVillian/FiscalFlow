@@ -1,15 +1,12 @@
-
 package com.example.fiscalflow
 
 import android.app.Application
-//import android.util.Log
 import androidx.work.WorkManager
 import com.example.fiscalflow.data.AppDatabase
 import com.example.fiscalflow.data.FiscalFlowRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-//import kotlinx.coroutines.launch
 
 class FiscalFlowApp : Application() {
 
@@ -30,17 +27,8 @@ class FiscalFlowApp : Application() {
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    /*fun syncLocalDataToCloud() {
-        syncScope.launch {
-            try {
-                FiscalFlowCloudSync.uploadLocalData(database)
-                Log.d("FiscalFlowCloudSync", "Upload completed")
-            } catch (e: Exception) {
-                Log.w("FiscalFlowCloudSync", "Upload failed; local data remains available", e)
-            }
-        }
-    }*/
     fun syncLocalDataToCloud(ownerUsername: String) {
+        if (!IS_CLOUD_SYNC_ENABLED) return
         FiscalFlowUploadWorker.schedule(this, ownerUsername)
     }
 
@@ -52,19 +40,30 @@ class FiscalFlowApp : Application() {
         WorkManager.getInstance(this)
             .cancelUniqueWork("fiscal_flow_cloud_upload")
     }
+
     suspend fun hasCloudBackup(ownerUsername: String): Boolean {
+        if (!IS_CLOUD_SYNC_ENABLED) return false
         return FiscalFlowCloudSync.hasCloudDataForAccount(
             database,
             ownerUsername
         )
     }
 
-    suspend fun hasLocalFinancialData(ownerUsername: String = "Belinda"): Boolean {
-        return (database.expenseDao().count(ownerUsername) > 0) ||
-                (database.categoryDao().count(ownerUsername) > 0) ||
-                database.budgetGoalDao().hasGoal(ownerUsername)
+    suspend fun hasLocalFinancialData(ownerUsername: String): Boolean {
+        val username = ownerUsername.trim()
+        if (username.isBlank()) return false
+        return (database.expenseDao().count(username) > 0) ||
+                (database.categoryDao().count(username) > 0) ||
+                database.budgetGoalDao().hasGoal(username)
     }
+
     suspend fun restoreCloudData(ownerUsername: String) {
+        if (!IS_CLOUD_SYNC_ENABLED) return
         FiscalFlowCloudSync.restoreCloudData(database, ownerUsername)
+    }
+
+    companion object {
+        // Explicit, default-disabled feature gate for cloud sync operations
+        const val IS_CLOUD_SYNC_ENABLED = false
     }
 }
