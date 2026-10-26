@@ -18,7 +18,14 @@ class FiscalFlowUploadWorker(
     override suspend fun doWork(): Result {
         return try {
             val app = applicationContext as FiscalFlowApp
-            FiscalFlowCloudSync.uploadLocalData(app.database)
+
+            //Read the local account supplied when the work was scheduled
+            val ownerUsername = inputData.getString("ownerUsername")
+                ?: return Result.failure()
+
+            // Process only after the sync function verifies account ownership
+            FiscalFlowCloudSync.processPendingChanges(app.database, ownerUsername)
+
             Result.success()
         } catch (e: Exception) {
             Result.retry()
@@ -26,12 +33,22 @@ class FiscalFlowUploadWorker(
     }
 
     companion object {
-        fun schedule(context: Context) {
+        // Require the active local username when scheduling
+        fun schedule(context: Context, ownerUsername: String) {
+            val username = ownerUsername.trim()
+
+            // Never queue work without an account
+            if (username.isBlank()) return
+
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
 
             val request = OneTimeWorkRequestBuilder<FiscalFlowUploadWorker>()
+                // Pass the account to the background worker
+                .setInputData(
+                    androidx.work.workDataOf("ownerUsername" to username)
+                )
                 .setConstraints(constraints)
                 .build()
 

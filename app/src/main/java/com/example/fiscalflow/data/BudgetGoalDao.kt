@@ -1,3 +1,4 @@
+
 package com.example.fiscalflow.data
 
 import androidx.room.Dao
@@ -7,17 +8,17 @@ import androidx.room.Query
 import com.example.fiscalflow.BudgetingGoal
 import kotlinx.coroutines.flow.Flow
 
-// Database operations for monthly budget goal
 @Dao
 interface BudgetGoalDao {
 
-    @Query("SELECT * FROM budget_goal WHERE id = ${BudgetingGoal.SINGLE_ROW_ID} LIMIT 1")
-    fun observeCurrent(): Flow<BudgetingGoal?>
+    // Observe the budget belonging to the selected account
+    @Query("SELECT * FROM budget_goal WHERE ownerUsername = :ownerUsername AND id = ${BudgetingGoal.SINGLE_ROW_ID} LIMIT 1")
+    fun observeCurrent(ownerUsername: String): Flow<BudgetingGoal?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(goal: BudgetingGoal)
 
-    @Query("SELECT EXISTS(SELECT 1 FROM budget_goal)")
-    suspend fun hasGoal(): Boolean
-
+    // Check whether this account has saved a budget
+    @Query("SELECT EXISTS(SELECT 1 FROM budget_goal WHERE ownerUsername = :ownerUsername)")
+    suspend fun hasGoal(ownerUsername: String): Boolean
 }

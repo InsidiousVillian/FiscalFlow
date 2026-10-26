@@ -54,7 +54,8 @@ fun TransactionsScreen(
     expenses: List<Expense>,
     categories: List<String>,
     onAddExpense: () -> Unit = {},
-    onBackToDashboard: () -> Unit = {}
+    onBackToDashboard: () -> Unit = {},
+    onManageCategories: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoryFilter by remember { mutableStateOf("All") }
@@ -400,6 +401,27 @@ fun TransactionsScreen(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Navigate to Category Goals to add or delete categories
+        Button(
+            onClick = onManageCategories,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF6D5BD0)
+            )
+        ) {
+            Text(
+                text = "⚙Manage Categories (Add / Delete)",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 

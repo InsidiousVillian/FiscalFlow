@@ -18,4 +18,18 @@ interface UserDao {
 
     @Query("SELECT COUNT(*) FROM users")
     suspend fun count(): Int
+
+    // Find whether a Firebase UID is already linked to a local account
+    @Query("SELECT * FROM users WHERE firebaseUid = :uid LIMIT 1")
+    suspend fun findByFirebaseUid(uid: String): UserEntity?
+
+    //Link a Firebase UID only if the account is not linked yet Or if it is already linked to the same UID
+    @Query("""
+        UPDATE users
+        SET firebaseUid = :uid
+        WHERE username = :username
+        AND (firebaseUid IS NULL OR firebaseUid = :uid)
+    """)
+    suspend fun updateFirebaseUid(username: String, uid: String): Int
+
 }

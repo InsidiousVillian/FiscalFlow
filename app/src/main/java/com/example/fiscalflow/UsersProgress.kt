@@ -4,14 +4,16 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 // Tracks overall gamification progress including XP points, streaks, and unlocked milestones.
-@Entity(tableName = "user_progress")
+@Entity(tableName = "user_progress",
+    primaryKeys = ["ownerUsername", "id"])
 data class UsersProgress(
     val xp: Int = 0,
     val streak: Int = 0,
     // Joined with pipe delimiter "|" for Room storage
     val milestonesRaw: String = "",
-    @PrimaryKey
-    val id: Int = SINGLE_ROW_ID
+    val id: Int = SINGLE_ROW_ID,
+    //Existing progress will be assigned to Belinda during migration.
+    val ownerUsername: String = "Belinda"
 ) {
     // Helper property to access milestones as a list
     val milestones: List<String>

@@ -14,5 +14,8 @@ data class Expense(
     val description: String,       // description/title
     val category: String,          // category name
     val photoUri: String? = null,  // optional receipt image URI
-    val isIncome: Boolean = false  // false = Expense, true = Income
+    val isIncome: Boolean = false,  // false = Expense, true = Income
+
+    // The existing record that is assign to belinda
+    val ownerUsername: String = "Belinda"
 )

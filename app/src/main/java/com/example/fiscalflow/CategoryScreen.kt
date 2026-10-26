@@ -92,15 +92,6 @@ fun CategoryScreen(
                 fontWeight = FontWeight.Bold,
                 color = DarkBlue
             )
-
-            TextButton(onClick = onLogout) {
-                Text(
-                    "Log Out",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Blue
-                )
-            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))

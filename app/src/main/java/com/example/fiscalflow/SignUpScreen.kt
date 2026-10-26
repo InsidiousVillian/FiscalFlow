@@ -100,7 +100,6 @@ fun SignUpScreen(
                         submitting = true
                         errorMessage = null
                         //Register firebase account
-                        val firebaseEmail = if (username.trim().contains("@")) username.trim() else "${username.trim()}@fiscalflow.com"
                         FirebaseAuthManager().register(
                             email = firebaseEmail,
                             password = password

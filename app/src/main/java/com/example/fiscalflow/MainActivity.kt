@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
                 val vm: FiscalFlowViewModel = viewModel(factory = FiscalFlowViewModel.Factory)
                 val scope = rememberCoroutineScope()
 
-                // collectAsStateWithLifecycle stops collecting when the Activity is stopped,
+          1      // collectAsStateWithLifecycle stops collecting when the Activity is stopped,
                 // which avoids battery drain and unnecessary DB reads in the background.
                 val categories by vm.categories.collectAsStateWithLifecycle()
                 val expenses by vm.expenses.collectAsStateWithLifecycle()
@@ -68,6 +68,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onLoginSuccess = { username ->
+                                    vm.setActiveUser(username)
                                     loggedInUsername = username
                                     currentScreen = "dashboard"
                                 },
@@ -86,6 +87,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 //Go to dashboard when signed in
                                 onSignUpSuccess = { username ->
+                                    vm.setActiveUser(username)
                                     loggedInUsername = username
                                     currentScreen = "dashboard"
                                 },
@@ -125,7 +127,8 @@ class MainActivity : ComponentActivity() {
                                 expenses = expenses,
                                 categories = categories,
                                 onAddExpense = { currentScreen = "expense" },
-                                onBackToDashboard = { currentScreen = "dashboard" }
+                                onBackToDashboard = { currentScreen = "dashboard" },
+                                onManageCategories = { currentScreen = "categories"}
                             )
                         }
                         //Category screen
@@ -140,6 +143,7 @@ class MainActivity : ComponentActivity() {
                                 onAddCategory = { name, onResult -> vm.addCategory(name, onResult) },
                                 onDeleteCategory = { category -> vm.deleteCategory(category) },
                                 onLogout = {
+                                    vm.clearActiveUser()
                                     loggedInUsername = ""
                                     currentScreen = "welcome"
                                 },
@@ -221,6 +225,7 @@ class MainActivity : ComponentActivity() {
                                 onBackToDashboard = {currentScreen = "dashboard" },
                                 // Log out
                                 onLogout = {
+                                    vm.clearActiveUser()
                                     loggedInUsername = ""
                                     currentScreen = "login"
                                 }

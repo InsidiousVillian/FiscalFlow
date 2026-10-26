@@ -1,3 +1,4 @@
+
 package com.example.fiscalflow.data
 
 import androidx.room.Dao
@@ -7,21 +8,25 @@ import androidx.room.Query
 import com.example.fiscalflow.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
-// Database operations for spending categories
 @Dao
 interface CategoryDao {
 
-    // Emits live updates whenever category records change
-    @Query("SELECT * FROM categories ORDER BY name COLLATE NOCASE ASC")
-    fun observeAll(): Flow<List<CategoryEntity>>
+    // Only show categories owned by the active account
+    @Query("SELECT * FROM categories WHERE ownerUsername = :ownerUsername ORDER BY name COLLATE NOCASE ASC")
+    fun observeAll(ownerUsername: String): Flow<List<CategoryEntity>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(category: CategoryEntity): Long
 
-    @Query("DELETE FROM categories WHERE name = :categoryName")
-    suspend fun deleteByName(categoryName: String)
+    //Delete a category only from the selected account
+    @Query("DELETE FROM categories WHERE ownerUsername = :ownerUsername AND name = :categoryName")
+    suspend fun deleteByName(ownerUsername: String, categoryName: String)
 
-    @Query("SELECT COUNT(*) FROM categories")
-    suspend fun count(): Int
+    //Count categories for the selected account only
+    @Query("SELECT COUNT(*) FROM categories WHERE ownerUsername = :ownerUsername")
+    suspend fun count(ownerUsername: String): Int
 
+    @Query("SELECT * FROM categories WHERE ownerUsername = :ownerUsername AND name = :categoryName LIMIT 1")
+    suspend fun getByName(ownerUsername: String, categoryName: String): CategoryEntity?
 }
+

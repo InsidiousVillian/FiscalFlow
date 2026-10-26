@@ -4,8 +4,13 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 // Category database record. Name acts as primary key for uniqueness.
-@Entity(tableName = "categories")
+@Entity(
+    tableName = "categories",
+    primaryKeys = ["ownerUsername", "name"]
+)
 data class CategoryEntity(
-    @PrimaryKey
-    val name: String
+    val name: String,
+
+    // Belinda remains the owner of existing categories after migration
+    val ownerUsername: String = "Belinda"
 )

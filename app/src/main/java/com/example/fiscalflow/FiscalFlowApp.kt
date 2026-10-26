@@ -3,6 +3,7 @@ package com.example.fiscalflow
 
 import android.app.Application
 //import android.util.Log
+import androidx.work.WorkManager
 import com.example.fiscalflow.data.AppDatabase
 import com.example.fiscalflow.data.FiscalFlowRepository
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +23,8 @@ class FiscalFlowApp : Application() {
             categoryDao = database.categoryDao(),
             expenseDao = database.expenseDao(),
             budgetGoalDao = database.budgetGoalDao(),
-            userProgressDao = database.userProgressDao()
+            userProgressDao = database.userProgressDao(),
+            pendingSyncDao = database.pendingSyncDao()
         )
     }
 
@@ -38,24 +40,31 @@ class FiscalFlowApp : Application() {
             }
         }
     }*/
-    fun syncLocalDataToCloud() {
-        FiscalFlowUploadWorker.schedule(this)
+    fun syncLocalDataToCloud(ownerUsername: String) {
+        FiscalFlowUploadWorker.schedule(this, ownerUsername)
     }
 
     override fun onCreate() {
         super.onCreate()
-        FiscalFlowNetworkSync.schedulePeriodicSync(this)
+        WorkManager.getInstance(this)
+            .cancelUniqueWork("fiscal_flow_periodic_cloud_sync")
+
+        WorkManager.getInstance(this)
+            .cancelUniqueWork("fiscal_flow_cloud_upload")
     }
-    suspend fun hasCloudBackup(): Boolean {
-        return FiscalFlowCloudSync.hasCloudData()
+    suspend fun hasCloudBackup(ownerUsername: String): Boolean {
+        return FiscalFlowCloudSync.hasCloudDataForAccount(
+            database,
+            ownerUsername
+        )
     }
 
-    suspend fun hasLocalFinancialData(): Boolean {
-        return database.expenseDao().count() > 0 ||
-                database.categoryDao().count() > 0 ||
-                database.budgetGoalDao().hasGoal()
+    suspend fun hasLocalFinancialData(ownerUsername: String = "Belinda"): Boolean {
+        return (database.expenseDao().count(ownerUsername) > 0) ||
+                (database.categoryDao().count(ownerUsername) > 0) ||
+                database.budgetGoalDao().hasGoal(ownerUsername)
     }
-    suspend fun restoreCloudData() {
-        FiscalFlowCloudSync.restoreCloudData(database)
+    suspend fun restoreCloudData(ownerUsername: String) {
+        FiscalFlowCloudSync.restoreCloudData(database, ownerUsername)
     }
 }

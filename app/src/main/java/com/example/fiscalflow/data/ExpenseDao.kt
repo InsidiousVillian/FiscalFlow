@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.OnConflictStrategy
 import com.example.fiscalflow.Expense
 import kotlinx.coroutines.flow.Flow
 
@@ -11,9 +12,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ExpenseDao {
 
-    // Fetch all expenses with newest entries first
-    @Query("SELECT * FROM expenses ORDER BY id DESC")
-    fun observeAll(): Flow<List<Expense>>
+
+    @Query("SELECT * FROM expenses WHERE ownerUsername = :ownerUsername ORDER BY id DESC")
+    fun observeAll(ownerUsername: String): Flow<List<Expense>>
 
     @Insert
     suspend fun insert(expense: Expense): Long
@@ -21,16 +22,22 @@ interface ExpenseDao {
     @Delete
     suspend fun delete(expense: Expense)
 
-    @Query("DELETE FROM expenses WHERE category = :categoryName")
-    suspend fun deleteByCategory(categoryName: String)
+    // Delete a category's expenses only for the selected account
+    @Query("DELETE FROM expenses WHERE ownerUsername = :ownerUsername AND category = :categoryName")
+    suspend fun deleteByCategory(ownerUsername: String, categoryName: String)
 
-    @Query("SELECT EXISTS(SELECT 1 FROM expenses WHERE id = :expenseId)")
-    suspend fun existsById(expenseId: Long): Boolean
+    // Check an expense only within the selected account
+    @Query("SELECT EXISTS(SELECT 1 FROM expenses WHERE ownerUsername = :ownerUsername AND id = :expenseId)")
+    suspend fun existsById(ownerUsername: String, expenseId: Long): Boolean
 
-    @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun restoreExpense(expense: Expense)
 
-    @Query("SELECT COUNT(*) FROM expenses")
-    suspend fun count(): Int
+    // Count expenses for migration checks and account-specific totals
+    @Query("SELECT COUNT(*) FROM expenses WHERE ownerUsername = :ownerUsername")
+    suspend fun count(ownerUsername: String): Int
+
+    @Query("SELECT * FROM expenses WHERE ownerUsername = :ownerUsername AND id = :expenseId LIMIT 1")
+    suspend fun getById(ownerUsername: String, expenseId: Long): Expense?
 
 }
