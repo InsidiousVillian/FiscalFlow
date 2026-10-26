@@ -1,6 +1,7 @@
 package com.example.fiscalflow
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -136,10 +137,18 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
 
     fun deleteExpense(expense: Expense) {
         viewModelScope.launch {
-            repository.deleteExpense(expense)
-
-            // Attempt to sync after the local deletion.
-            getApplication<FiscalFlowApp>().syncLocalDataToCloud()
+            try {
+                repository.deleteExpense(expense)
+                FiscalFlowCloudSync.deleteCloudExpense(expense.id)
+                getApplication<FiscalFlowApp>().syncLocalDataToCloud()
+            } catch (e: Exception) {
+                Log.w(
+                    "FiscalFlowViewModel",
+                    "Local expense deleted; cloud deletion needs retry",
+                    e
+                )
+                getApplication<FiscalFlowApp>().syncLocalDataToCloud()
+            }
         }
     }
 

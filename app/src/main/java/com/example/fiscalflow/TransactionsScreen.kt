@@ -53,6 +53,7 @@ fun TransactionsScreen(
     modifier: Modifier = Modifier,
     expenses: List<Expense>,
     categories: List<String>,
+    onDeleteExpense: (Expense) -> Unit = {},
     onAddExpense: () -> Unit = {},
     onBackToDashboard: () -> Unit = {}
 ) {
@@ -60,6 +61,7 @@ fun TransactionsScreen(
     var selectedCategoryFilter by remember { mutableStateOf("All") }
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
     var selectedReceiptUri by remember { mutableStateOf<String?>(null) }
+    var pendingDeleteExpense by remember { mutableStateOf<Expense?>(null) }
 
     // Calculate total spent and total income using a while loop
     var totalSpent = 0.0
@@ -358,7 +360,6 @@ fun TransactionsScreen(
 
                         Spacer(modifier = Modifier.width(14.dp))
 
-                        // Transaction Info
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "$categoryIcon ${expense.description.ifBlank { expense.category }}",
@@ -395,6 +396,18 @@ fun TransactionsScreen(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (expense.isIncome) IncomeGreen else ExpenseRed
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // Delete button
+                        Text(
+                            text = "🗑️",
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .clickable { pendingDeleteExpense = expense }
+                                .padding(4.dp)
                         )
                     }
                 }
@@ -455,6 +468,31 @@ fun TransactionsScreen(
             confirmButton = {
                 TextButton(onClick = { selectedReceiptUri = null }) {
                     Text("Close", fontSize = 15.sp)
+                }
+            }
+        )
+    }
+
+    if (pendingDeleteExpense != null) {
+        val itemToDelete = pendingDeleteExpense!!
+        AlertDialog(
+            onDismissRequest = { pendingDeleteExpense = null },
+            title = { Text("Delete Transaction", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to delete '${itemToDelete.description.ifBlank { itemToDelete.category }}'? This action cannot be undone.", fontSize = 15.sp) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteExpense(itemToDelete)
+                        pendingDeleteExpense = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
+                ) {
+                    Text("Delete", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteExpense = null }) {
+                    Text("Cancel")
                 }
             }
         )
