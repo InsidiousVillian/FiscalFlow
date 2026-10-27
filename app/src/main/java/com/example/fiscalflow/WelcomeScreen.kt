@@ -1,5 +1,8 @@
 package com.example.fiscalflow
 
+// Jet: first screen users see. GET STARTED opens sign-up; Log in opens the login screen.
+// Bubble background and ScrollableScreen are shared team UI helpers.
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Jet: welcome palette kept independent of Material dynamic colour.
 private val WelcomeBlue = Color(0xFF1E3A8A)
 private val WelcomeMuted = Color(0xFF4B5563)
 private val WelcomeSoft = Color(0xFF6B7280)
@@ -60,6 +64,7 @@ fun WelcomeScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             contentPadding = PaddingValues(horizontal = 36.dp, vertical = 28.dp)
         ) {
+            // Jet: brand block — logo, title, and slogan.
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(modifier = Modifier.height(36.dp))
 
@@ -86,6 +91,7 @@ fun WelcomeScreen(
                 )
             }
 
+            // Jet: short value statement in the middle of the screen.
             Text(
                 text = "Take control of your money and\nreach your goals",
                 fontSize = 16.sp,
@@ -95,6 +101,7 @@ fun WelcomeScreen(
                 lineHeight = 24.sp
             )
 
+            // Jet: primary action is new-account sign-up; secondary action is existing login.
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -140,6 +147,7 @@ fun WelcomeScreen(
     }
 }
 
+// Jet: app mark used on the welcome header.
 @Composable
 private fun FiscalFlowLogo() {
     Image(

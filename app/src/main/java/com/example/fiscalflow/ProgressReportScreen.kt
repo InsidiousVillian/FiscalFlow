@@ -1,5 +1,8 @@
 package com.example.fiscalflow
 
+// Jet: Progress Report — coaching view for monthly spend, overspent categories, and short charts.
+// Data is derived from existing expenses + BudgetingGoal. No extra Room tables.
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +50,7 @@ fun ProgressReportScreen(
     budgetGoal: BudgetingGoal?,
     onBackToDashboard: () -> Unit
 ) {
+    // Jet: all totals are this-month expenses only (income is excluded from spend).
     val monthItems = expensesInCurrentMonth(expenses)
     val monthlySpent = monthlyExpenseTotal(monthItems)
     val monthlyIncome = monthlyIncomeTotal(monthItems)
@@ -62,6 +66,7 @@ fun ProgressReportScreen(
     ScrollableScreen(
         modifier = modifier.fillMaxSize()
     ) {
+        // Jet: back to dashboard.
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBackToDashboard) {
                 Icon(
@@ -88,6 +93,7 @@ fun ProgressReportScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Jet: hero card — spent vs monthly max, progress bar, one motivational sentence.
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(22.dp),
@@ -128,6 +134,7 @@ fun ProgressReportScreen(
 
         Spacer(modifier = Modifier.height(22.dp))
 
+        // Jet: watch list — categories over their fair share of the monthly max (or 40% if no goal).
         Text(
             text = "Watch list",
             fontSize = 22.sp,
@@ -181,6 +188,7 @@ fun ProgressReportScreen(
 
         Spacer(modifier = Modifier.height(22.dp))
 
+        // Jet: visual report — each category as a share of the monthly max (red if overspent).
         Text(
             text = "Category share",
             fontSize = 22.sp,
@@ -200,6 +208,7 @@ fun ProgressReportScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Jet: visual report — last 7 days of expense totals (Canvas bars).
         Text(
             text = "Last 7 days",
             fontSize = 22.sp,
@@ -212,6 +221,7 @@ fun ProgressReportScreen(
 
         Spacer(modifier = Modifier.height(22.dp))
 
+        // Jet: visual report — this month's income vs expenses.
         Text(
             text = "Income vs expenses",
             fontSize = 22.sp,
@@ -229,6 +239,7 @@ fun ProgressReportScreen(
     }
 }
 
+// Jet: empty-state card used when a report section has no data.
 @Composable
 private fun EmptyReportCard(text: String) {
     Card(
@@ -246,6 +257,7 @@ private fun EmptyReportCard(text: String) {
     }
 }
 
+// Jet: horizontal bar for one category; overspent rows use red.
 @Composable
 private fun CategoryShareBar(report: CategorySpendReport) {
     Card(
@@ -284,6 +296,7 @@ private fun CategoryShareBar(report: CategorySpendReport) {
     }
 }
 
+// Jet: Compose Canvas column chart — no third-party chart library.
 @Composable
 private fun WeekSpendChart(bars: List<DailySpendBar>) {
     val maxAmount = bars.maxOfOrNull { it.amount }?.takeIf { it > 0 } ?: 1.0
@@ -335,6 +348,7 @@ private fun WeekSpendChart(bars: List<DailySpendBar>) {
     }
 }
 
+// Jet: two-bar comparison of monthly income and expenses.
 @Composable
 private fun IncomeExpenseCompare(income: Double, expenses: Double) {
     val maxValue = maxOf(income, expenses, 1.0)

@@ -51,6 +51,7 @@ private val ExpenseRed = Color(0xFFDC2626)
 fun DashboardScreen(
     modifier: Modifier = Modifier,
     expenses: List<Expense>,
+    spendingAlert: SpendingAlert? = null,
     onTransactionsClick: () -> Unit,
     onBudgetClick: () -> Unit,
     onProgressReportClick: () -> Unit,
@@ -139,6 +140,45 @@ fun DashboardScreen(
             fontWeight = FontWeight.Bold,
             color = DashboardDarkBlue
         )
+
+        // Jet: banner while monthly spend is close to or over max. Tap opens Progress Report.
+        val visibleAlert = spendingAlert?.takeIf { it.level != SpendingAlertLevel.None }
+        if (visibleAlert != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onProgressReportClick),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (visibleAlert.level == SpendingAlertLevel.Over) {
+                        Color(0xFFFEF2F2)
+                    } else {
+                        Color(0xFFFFFBEB)
+                    }
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = visibleAlert.title,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (visibleAlert.level == SpendingAlertLevel.Over) {
+                            ExpenseRed
+                        } else {
+                            Color(0xFFB45309)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = visibleAlert.message,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DashboardDarkBlue
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 

@@ -5,8 +5,10 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+// Jet: shared date format used by Progress Report and spending alerts ("D/M/YYYY").
 private val expenseDateFormat = SimpleDateFormat("d/M/yyyy", Locale.getDefault())
 
+// Jet: one category's month spend vs its fair share of the monthly max.
 data class CategorySpendReport(
     val name: String,
     val amount: Double,
@@ -19,6 +21,21 @@ data class CategorySpendReport(
 data class DailySpendBar(
     val label: String,
     val amount: Double
+)
+
+// Jet: None = no banner/notification; Approaching = 80%+ of max; Over = past max.
+enum class SpendingAlertLevel {
+    None,
+    Approaching,
+    Over
+}
+
+data class SpendingAlert(
+    val level: SpendingAlertLevel,
+    val title: String,
+    val message: String,
+    val monthlySpent: Double,
+    val maximum: Double
 )
 
 // Calculates how much of the max budget limit has been spent so far
@@ -43,6 +60,7 @@ fun parseExpenseDate(dateStr: String): Date? {
     }
 }
 
+// Jet: keep Progress Report / alerts on the current calendar month only.
 fun expensesInCurrentMonth(expenses: List<Expense>): List<Expense> {
     val calendar = Calendar.getInstance()
     val currentMonth = calendar.get(Calendar.MONTH)
@@ -65,6 +83,7 @@ fun monthlyIncomeTotal(monthItems: List<Expense>): Double {
     return monthItems.filter { it.isIncome }.sumOf { it.amount }
 }
 
+// Jet: a category is overspent if it exceeds monthlyMax / categoryCount (or 40% of spend with no goal).
 fun categorySpendReports(
     monthItems: List<Expense>,
     categories: List<String>,
@@ -116,6 +135,7 @@ fun categorySpendReports(
     }.sortedByDescending { it.amount }
 }
 
+// Jet: one coaching sentence for the Progress Report hero card.
 fun pickProgressMessage(
     budgetGoal: BudgetingGoal?,
     monthlySpent: Double,
@@ -139,6 +159,51 @@ fun pickProgressMessage(
     }
 }
 
+// Jet: used after saving an expense and for the dashboard banner.
+fun evaluateSpendingAlert(
+    expenses: List<Expense>,
+    budgetGoal: BudgetingGoal?
+): SpendingAlert {
+    val maximum = budgetGoal?.maximum ?: 0.0
+    val monthlySpent = monthlyExpenseTotal(expensesInCurrentMonth(expenses))
+    if (maximum <= 0) {
+        return SpendingAlert(
+            level = SpendingAlertLevel.None,
+            title = "",
+            message = "",
+            monthlySpent = monthlySpent,
+            maximum = maximum
+        )
+    }
+
+    return when {
+        monthlySpent > maximum -> SpendingAlert(
+            level = SpendingAlertLevel.Over,
+            title = "Over your monthly budget",
+            message = "You've spent R %.2f of your R %.2f max. Open Progress Report to see which categories are pulling you over."
+                .format(monthlySpent, maximum),
+            monthlySpent = monthlySpent,
+            maximum = maximum
+        )
+        monthlySpent >= maximum * 0.8 -> SpendingAlert(
+            level = SpendingAlertLevel.Approaching,
+            title = "Close to your monthly max",
+            message = "You've used %.0f%% of your R %.2f max. Slow down before the month ends."
+                .format((monthlySpent / maximum) * 100.0, maximum),
+            monthlySpent = monthlySpent,
+            maximum = maximum
+        )
+        else -> SpendingAlert(
+            level = SpendingAlertLevel.None,
+            title = "",
+            message = "",
+            monthlySpent = monthlySpent,
+            maximum = maximum
+        )
+    }
+}
+
+// Jet: seven daily expense totals for the Progress Report column chart.
 fun lastSevenDaySpends(expenses: List<Expense>): List<DailySpendBar> {
     val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
     val bars = mutableListOf<DailySpendBar>()

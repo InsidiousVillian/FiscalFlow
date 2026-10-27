@@ -1,15 +1,25 @@
 package com.example.fiscalflow
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fiscalflow.ui.theme.FiscalFlowTheme
@@ -25,7 +35,7 @@ class MainActivity : ComponentActivity() {
                 val vm: FiscalFlowViewModel = viewModel(factory = FiscalFlowViewModel.Factory)
                 val scope = rememberCoroutineScope()
 
-          1      // collectAsStateWithLifecycle stops collecting when the Activity is stopped,
+                // collectAsStateWithLifecycle stops collecting when the Activity is stopped,
                 // which avoids battery drain and unnecessary DB reads in the background.
                 val categories by vm.categories.collectAsStateWithLifecycle()
                 val expenses by vm.expenses.collectAsStateWithLifecycle()
@@ -37,6 +47,26 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by remember { mutableStateOf("welcome") }
                 var loggedInUsername by remember { mutableStateOf("") }
                 var graphsReturnScreen by remember { mutableStateOf("dashboard") }
+                // Jet: in-app popup after an expense pushes monthly spend to 80% or over max.
+                var spendingAlertPopup by remember { mutableStateOf<SpendingAlert?>(null) }
+                val context = LocalContext.current
+                val currentSpendingAlert = evaluateSpendingAlert(expenses, budgetGoal)
+                val notificationPermission = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { }
+
+                // Jet: ask for POST_NOTIFICATIONS on Android 13+ after login.
+                LaunchedEffect(loggedInUsername) {
+                    if (loggedInUsername.isBlank()) return@LaunchedEffect
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@LaunchedEffect
+                    val granted = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (!granted) {
+                        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
 
                 // Derived values recomputed automatically whenever expenses/goal change in the DB.
                 val totalSpent = expenses.sumOf { it.amount }
@@ -49,7 +79,7 @@ class MainActivity : ComponentActivity() {
                         containerColor = Color.Transparent
                     ) { innerPadding ->
                     when (currentScreen) {
-                        // Welcome screen
+                        // Jet: app starts here (WelcomeScreen — GET STARTED / Log in).
                         "welcome" -> {
                             WelcomeScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -101,6 +131,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 // Send the existing expenses to Dashboard.
                                 expenses = expenses,
+                                spendingAlert = currentSpendingAlert,
                                 // Open Transactions.
                                 onTransactionsClick = { currentScreen = "transactions" },
                                 // Open Budget.
@@ -164,11 +195,21 @@ class MainActivity : ComponentActivity() {
                                 categories = categories,
                                 onExpenseSaved = { expense ->
                                     vm.addExpense(expense)
-                                    currentScreen = "transactions"},
+                                    // Jet: income does not count toward the monthly max alert.
+                                    if (!expense.isIncome) {
+                                        val projected = expenses + expense
+                                        val alert = evaluateSpendingAlert(projected, budgetGoal)
+                                        if (alert.level != SpendingAlertLevel.None) {
+                                            SpendingNotifier.notify(this@MainActivity, alert)
+                                            spendingAlertPopup = alert
+                                        }
+                                    }
+                                    currentScreen = "transactions"
+                                },
                                 onBack = { currentScreen = "transactions" }
                             )
                         }
-                        // Progress report
+                        // Jet: Progress Report screen.
                         "progress" -> {
                             ProgressReportScreen(
                                 modifier = Modifier.padding(innerPadding),
@@ -234,6 +275,30 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     }
+                }
+
+                // Jet: popup after save; View report opens Progress Report.
+                spendingAlertPopup?.let { alert ->
+                    AlertDialog(
+                        onDismissRequest = { spendingAlertPopup = null },
+                        title = { Text(alert.title) },
+                        text = { Text(alert.message) },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    spendingAlertPopup = null
+                                    currentScreen = "progress"
+                                }
+                            ) {
+                                Text("View report")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { spendingAlertPopup = null }) {
+                                Text("OK")
+                            }
+                        }
+                    )
                 }
             }
         }

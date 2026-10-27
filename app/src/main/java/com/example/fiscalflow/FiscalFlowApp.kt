@@ -34,6 +34,8 @@ class FiscalFlowApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Jet: create the spending-alert notification channel once per app launch.
+        SpendingNotifier.createChannel(this)
         WorkManager.getInstance(this)
             .cancelUniqueWork("fiscal_flow_periodic_cloud_sync")
 
