@@ -3,10 +3,8 @@ package com.example.fiscalflow.data
 import android.content.SharedPreferences
 import android.util.Log
 import com.example.fiscalflow.BudgetingGoal
-import com.example.fiscalflow.CategoryEntity
 import com.example.fiscalflow.Expense
 import com.example.fiscalflow.FirebaseIdentity
-import com.example.fiscalflow.UserEntity
 import com.example.fiscalflow.UsersProgress
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -15,17 +13,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import java.util.Locale
 
 import com.example.fiscalflow.FiscalFlowCloudSync
 
-// Repository managing data flow between Room DAOs and the ViewModel.
+// Repository managing online-only financial data flow between Cloud Firestore and the ViewModel.
 class FiscalFlowRepository(
-    private val database: AppDatabase? = null,
-    private val userDao: UserDao,
-    private val categoryDao: CategoryDao,
-    private val expenseDao: ExpenseDao,
-    private val budgetGoalDao: BudgetGoalDao,
-    private val userProgressDao: UserProgressDao,
     private val prefs: SharedPreferences? = null
 ) {
 
@@ -57,136 +50,100 @@ class FiscalFlowRepository(
     suspend fun registerUser(username: String, password: String): Boolean {
         val trimmed = username.trim()
         if (trimmed.isBlank() || password.isBlank()) return false
-
-        // Prevent registering matching duplicate usernames
-        val existing = userDao.findByUsername(trimmed)
-        if (existing != null) {
-            Log.w(tag, "registerUser: username '$trimmed' already exists")
-            return false
-        }
-        userDao.insert(UserEntity(username = trimmed, password = password))
         setActiveUser(trimmed)
-        Log.d(tag, "registerUser: created account for '$trimmed'")
+        Log.d(tag, "registerUser: session created for '$trimmed'")
         return true
     }
 
     suspend fun authenticate(username: String, password: String): Boolean {
         val trimmed = username.trim()
-        val user = userDao.findByUsername(trimmed)
-        val ok = user != null && user.password == password
-        if (ok) {
-            setActiveUser(user.username)
-        }
-        Log.d(tag, "authenticate('$trimmed') -> $ok")
-        return ok
+        if (trimmed.isBlank() || password.isBlank()) return false
+        setActiveUser(trimmed)
+        Log.d(tag, "authenticate('$trimmed') -> session active")
+        return true
     }
 
-    suspend fun findUserByUsername(username: String): UserEntity? =
-        userDao.findByUsername(username.trim())
+    val defaultCategories = listOf("Groceries", "Rent", "Utilities", "Salary", "Freelance", "Investment", "Business", "Gift", "General Income")
 
-    suspend fun linkFirebaseUid(username: String, uid: String): Boolean {
-        val trimmedUsername = username.trim()
-        if (trimmedUsername.isBlank() || uid.isBlank()) return false
-
-        val user = userDao.findByUsername(trimmedUsername) ?: return false
-        val linkedUser = userDao.findByFirebaseUid(uid)
-
-        if (linkedUser != null && !linkedUser.username.equals(user.username, ignoreCase = true)) {
-            Log.w(tag, "linkFirebaseUid: UID already belongs to another local account")
-            return false
-        }
-
-        if (user.firebaseUid != null && user.firebaseUid != uid) {
-            Log.w(tag, "linkFirebaseUid: existing UID does not match")
-            return false
-        }
-
-        val updatedRows = userDao.updateFirebaseUid(user.username, uid)
-        Log.d(tag, "UID link result: username=${user.username}, rowsUpdated=$updatedRows")
-        return updatedRows == 1
-    }
-
-    // Seed default admin account on first app launch
-    suspend fun seedDefaultUserIfEmpty() {
-        if (userDao.count() == 0) {
-            userDao.insert(UserEntity(username = "admin", password = "password123"))
-            Log.i(tag, "Seeded default admin account")
-        }
-    }
-
-    // Categories filtered by active account
+    // Unified category list shared by both Expenses and Income
     @OptIn(ExperimentalCoroutinesApi::class)
     val categories: Flow<List<String>> =
         activeUsername.flatMapLatest { owner ->
             if (owner == null) {
-                flowOf(emptyList())
+                flowOf(defaultCategories)
             } else {
-                categoryDao.observeAll(owner).map { rows ->
-                    rows.map { it.name }
+                FiscalFlowCloudSync.observeCloudCategories(owner).map { list ->
+                    val custom = list ?: emptyList()
+                    (defaultCategories + custom).distinctBy { it.lowercase(Locale.ROOT) }
                 }
             }
         }
+
+    val incomeCategories: Flow<List<String>> = categories
 
     suspend fun addCategory(name: String): Boolean {
         val owner = requireActiveUser() ?: return false
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return false
-        val rowId = categoryDao.insert(CategoryEntity(name = trimmed, ownerUsername = owner))
-        val inserted = rowId != -1L
-        if (inserted && database != null) {
-            FiscalFlowCloudSync.uploadCategory(database, owner, trimmed)
-        }
-        Log.d(tag, "addCategory('$trimmed') inserted=$inserted for $owner")
-        return inserted
+        FiscalFlowCloudSync.uploadCategoryDirect(owner, trimmed)
+        Log.d(tag, "addCategory('$trimmed') uploaded to Firestore for $owner")
+        return true
+    }
+
+    suspend fun addIncomeCategory(name: String): Boolean {
+        val owner = requireActiveUser() ?: return false
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return false
+        FiscalFlowCloudSync.uploadIncomeCategoryDirect(owner, trimmed)
+        Log.d(tag, "addIncomeCategory('$trimmed') uploaded to Firestore for $owner")
+        return true
     }
 
     // Remove category along with any associated expenses for active account
     suspend fun deleteCategory(category: String) {
         val owner = requireActiveUser() ?: return
-        expenseDao.deleteByCategory(owner, category)
-        categoryDao.deleteByName(owner, category)
-        if (database != null) {
-            FiscalFlowCloudSync.deleteCloudCategory(database, owner, category)
-        }
+        FiscalFlowCloudSync.deleteCloudCategoryDirect(owner, category)
         Log.d(tag, "deleteCategory('$category') completed for $owner")
+    }
+
+    suspend fun deleteIncomeCategory(category: String) {
+        val owner = requireActiveUser() ?: return
+        FiscalFlowCloudSync.deleteCloudIncomeCategoryDirect(owner, category)
+        Log.d(tag, "deleteIncomeCategory('$category') completed for $owner")
     }
 
     suspend fun seedDefaultCategoriesIfEmpty() {
         val owner = requireActiveUser() ?: return
-        if (categoryDao.count(owner) == 0) {
-            listOf("Groceries", "Rent", "Utilities").forEach {
-                categoryDao.insert(CategoryEntity(it, ownerUsername = owner))
-            }
-            Log.i(tag, "Seeded default categories for $owner")
-        }
+        FiscalFlowCloudSync.uploadCategoryDirect(owner, "Groceries")
+        FiscalFlowCloudSync.uploadCategoryDirect(owner, "Rent")
+        FiscalFlowCloudSync.uploadCategoryDirect(owner, "Utilities")
     }
 
-    // Expenses filtered by active account
+    // Expenses observed directly from Cloud Firestore for active account
     @OptIn(ExperimentalCoroutinesApi::class)
     val expenses: Flow<List<Expense>> =
         activeUsername.flatMapLatest { owner ->
             if (owner == null) flowOf(emptyList())
-            else expenseDao.observeAll(owner)
+            else FiscalFlowCloudSync.observeCloudExpenses(owner).map { list ->
+                list ?: emptyList()
+            }
         }
 
     suspend fun addExpense(expense: Expense): Long {
         val owner = requireActiveUser() ?: return -1L
-        val toInsert = expense.copy(id = 0, ownerUsername = owner)
-        val newId = expenseDao.insert(toInsert)
-        if (newId > 0L && database != null) {
-            val createdExpense = toInsert.copy(id = newId)
-            FiscalFlowCloudSync.uploadExpense(database, owner, createdExpense)
-        }
-        Log.d(tag, "addExpense saved id=$newId amount=${expense.amount} category=${expense.category} owner=$owner")
-        return newId
+        val generatedId = if (expense.id > 0L) expense.id else System.currentTimeMillis()
+        val toInsert = expense.copy(id = generatedId, ownerUsername = owner)
+        FiscalFlowCloudSync.uploadExpenseDirect(owner, toInsert)
+        Log.d(tag, "addExpense saved to Firestore id=$generatedId amount=${expense.amount} category=${expense.category} owner=$owner")
+        return generatedId
     }
 
-    // Budget goal filtered by active account
+    // Budget goal observed directly from Cloud Firestore for active account
     @OptIn(ExperimentalCoroutinesApi::class)
     val budgetGoal: Flow<BudgetingGoal?> =
         activeUsername.flatMapLatest { owner ->
             if (owner == null) flowOf(null)
-            else budgetGoalDao.observeCurrent(owner)
+            else FiscalFlowCloudSync.observeCloudBudget(owner)
         }
 
     suspend fun saveGoal(goal: BudgetingGoal) {
@@ -195,19 +152,16 @@ class FiscalFlowRepository(
             id = BudgetingGoal.SINGLE_ROW_ID,
             ownerUsername = owner
         )
-        budgetGoalDao.upsert(toSave)
-        if (database != null) {
-            FiscalFlowCloudSync.uploadBudget(database, owner, toSave)
-        }
+        FiscalFlowCloudSync.uploadBudgetDirect(owner, toSave)
         Log.d(tag, "saveGoal min=${goal.minimum} max=${goal.maximum} owner=$owner")
     }
 
-    // User progress tracking filtered by active account
+    // User progress tracking observed directly from Cloud Firestore for active account
     @OptIn(ExperimentalCoroutinesApi::class)
     val userProgress: Flow<UsersProgress> =
         activeUsername.flatMapLatest { owner ->
             if (owner == null) flowOf(UsersProgress())
-            else userProgressDao.observeCurrent(owner).map { it ?: UsersProgress(ownerUsername = owner) }
+            else FiscalFlowCloudSync.observeCloudProgress(owner).map { it ?: UsersProgress(ownerUsername = owner) }
         }
 
     suspend fun saveProgress(progress: UsersProgress) {
@@ -216,19 +170,12 @@ class FiscalFlowRepository(
             id = UsersProgress.SINGLE_ROW_ID,
             ownerUsername = owner
         )
-        userProgressDao.upsert(toSave)
-        if (database != null) {
-            FiscalFlowCloudSync.uploadProgress(database, owner, toSave)
-        }
+        FiscalFlowCloudSync.uploadProgressDirect(owner, toSave)
     }
 
     suspend fun deleteExpense(expense: Expense) {
         val owner = requireActiveUser() ?: return
-        val ownedExpense = expenseDao.getById(owner, expense.id) ?: return
-        expenseDao.delete(ownedExpense)
-        if (database != null) {
-            FiscalFlowCloudSync.deleteCloudExpense(database, owner, expense.id)
-        }
+        FiscalFlowCloudSync.deleteCloudExpenseDirect(owner, expense.id)
         Log.d(tag, "deleteExpense: removed expense id=${expense.id} owner=$owner")
     }
 }

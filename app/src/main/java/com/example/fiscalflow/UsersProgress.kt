@@ -1,9 +1,6 @@
 package com.example.fiscalflow
 
-import androidx.room.Entity
-
 // Tracks overall gamification progress including XP points, streaks, and unlocked milestones per user.
-@Entity(tableName = "user_progress", primaryKeys = ["ownerUsername", "id"])
 data class UsersProgress(
     val xp: Int = 0,
     val streak: Int = 0,

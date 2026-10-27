@@ -1,12 +1,7 @@
 package com.example.fiscalflow
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-// Database model representing a tracked expense or income transaction.
-@Entity(tableName = "expenses")
+// Model representing a tracked expense or income transaction.
 data class Expense(
-    @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val amount: Double,            // amount spent or earned
     val startDate: String,         // start date string ("D/M/YYYY")

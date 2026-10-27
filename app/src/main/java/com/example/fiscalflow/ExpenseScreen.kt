@@ -60,6 +60,7 @@ import java.util.Calendar
 fun ExpenseScreen(
     modifier: Modifier = Modifier,
     categories: List<String>,
+    incomeCategories: List<String> = emptyList(),
     initialIsIncome: Boolean = false,
     initialPhotoUri: String? = null,
     initialPhotoName: String? = null,
@@ -87,9 +88,10 @@ fun ExpenseScreen(
     var endMonth by remember { mutableIntStateOf(today.get(Calendar.MONTH)) }
     var endYear by remember { mutableIntStateOf(currentYear) }
 
-    // Default categories depending on Expense or Income mode
-    val incomeCategories = remember { listOf("Salary", "Freelance", "Investment", "Business", "Gift", "General Income") }
-    val activeCategories = if (isIncomeType) incomeCategories else categories
+    // Categories shared for both Expense and Income mode
+    val activeCategories = categories.ifEmpty {
+        listOf("Groceries", "Rent", "Utilities", "Salary", "Freelance", "Investment", "Business", "Gift", "General Income")
+    }
 
     var selectedCategory by remember(isIncomeType) {
         mutableStateOf(activeCategories.firstOrNull().orEmpty())

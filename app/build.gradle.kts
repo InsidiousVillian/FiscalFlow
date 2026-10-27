@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // KSP processes Room annotations (@Entity, @Dao, @Database) at compile time
-    alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
 }
 
@@ -58,16 +56,11 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
-    // Room: offline SQLite-backed database
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx) // suspend + Flow support for DAOs
-    ksp(libs.androidx.room.compiler)       // generates Room implementation classes
-
-    // ViewModel for Compose (survives configuration changes, owns DB access)
+    // ViewModel for Compose (survives configuration changes)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
-    // Coroutines (Room ktx suspend/Flow calls run on background dispatcher)
+    // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
@@ -75,13 +68,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
-    // Room in-memory database + kotlinx-coroutines-test for our RoomDatabaseTest suite.
-    // Declared as direct coordinates (not through the version catalog) to keep the diff minimal.
-    androidTestImplementation("androidx.room:room-testing:2.6.1")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    //Add Firebase dependencies
+    // Add Firebase dependencies
     implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")

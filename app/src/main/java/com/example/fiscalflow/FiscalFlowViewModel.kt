@@ -29,20 +29,11 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
         repository.clearActiveUser()
     }
 
-    init {
-        viewModelScope.launch {
-            try {
-                if (repository.activeUsername.value.isNullOrBlank()) {
-                    repository.seedDefaultUserIfEmpty()
-                }
-            } catch (e: Exception) {
-                Log.w("FiscalFlowViewModel", "Database init failed", e)
-            }
-        }
-    }
-
     // Keep database flows warm while UI is active
     val categories: StateFlow<List<String>> = repository.categories
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val incomeCategories: StateFlow<List<String>> = repository.incomeCategories
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val expenses: StateFlow<List<Expense>> = repository.expenses
@@ -60,22 +51,16 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
         val authenticated = repository.authenticate(username, password)
         if (!authenticated) return false
 
-        // Attempt background Firebase Auth sign-in & UID linking if online
         try {
-            val uid = FirebaseIdentity.signIn(username, password)
-            repository.linkFirebaseUid(username, uid)
+            FirebaseIdentity.signIn(username, password)
         } catch (e: Exception) {
-            Log.w("FiscalFlowViewModel", "Firebase sign-in unavailable during local login: ${e.message}")
+            Log.w("FiscalFlowViewModel", "Firebase sign-in unavailable during login: ${e.message}")
         }
         return true
     }
 
     suspend fun signUp(username: String, password: String): String {
         val trimmed = username.trim()
-        val existing = repository.findUserByUsername(trimmed)
-        if (existing != null) {
-            return "Username '$trimmed' is already taken."
-        }
 
         var firebaseUid: String? = null
         var firebaseError: String? = null
@@ -88,13 +73,9 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
             Log.e("FiscalFlowAuth", "Firebase Auth registration failed for $trimmed: $firebaseError", e)
         }
 
-        val created = repository.registerUser(trimmed, password)
-        if (!created) {
-            return "Failed to save account locally in database."
-        }
+        repository.registerUser(trimmed, password)
 
         if (firebaseUid != null) {
-            repository.linkFirebaseUid(trimmed, firebaseUid)
             return "SUCCESS"
         } else {
             return "FIREBASE_ERROR: $firebaseError"
@@ -108,12 +89,29 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun addIncomeCategory(name: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            val added = repository.addIncomeCategory(name)
+            onResult(added)
+        }
+    }
+
     fun deleteCategory(category: String) {
         viewModelScope.launch {
             try {
                 repository.deleteCategory(category)
             } catch (e: Exception) {
                 Log.w("FiscalFlowViewModel", "Category deletion failed", e)
+            }
+        }
+    }
+
+    fun deleteIncomeCategory(category: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteIncomeCategory(category)
+            } catch (e: Exception) {
+                Log.w("FiscalFlowViewModel", "Income category deletion failed", e)
             }
         }
     }

@@ -1,9 +1,6 @@
 package com.example.fiscalflow
 
-import androidx.room.Entity
-
-// Stores monthly spending goals in Room per user.
-@Entity(tableName = "budget_goal", primaryKeys = ["ownerUsername", "id"])
+// Stores monthly spending goals per user.
 data class BudgetingGoal(
     val minimum: Double,
     val maximum: Double,

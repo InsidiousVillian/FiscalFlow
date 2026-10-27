@@ -45,6 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+
 // Category theme colors
 private val DarkBlue = Color(0xFF172554)
 private val Blue = Color(0xFF3B82F6)
@@ -57,12 +60,15 @@ private val White = Color.White
 fun CategoryScreen(
     modifier: Modifier = Modifier,
     categories: List<String>,
+    incomeCategories: List<String> = emptyList(),
     expenses: List<Expense>,
     budgetGoal: BudgetingGoal?,
     totalSpent: Double,
     spendingProgress: Float,
     onAddCategory: (name: String, result: (Boolean) -> Unit) -> Unit,
     onDeleteCategory: (name: String) -> Unit,
+    onAddIncomeCategory: (name: String, result: (Boolean) -> Unit) -> Unit = { _, _ -> },
+    onDeleteIncomeCategory: (name: String) -> Unit = {},
     onLogout: () -> Unit,
     onAddExpense: () -> Unit,
     onViewHistory: () -> Unit,
@@ -72,6 +78,8 @@ fun CategoryScreen(
     var categoryName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var pendingDeleteCategory by remember { mutableStateOf<String?>(null) }
+    val activeCategoryList = categories
     val listState = rememberLazyListState()
     RegisterListScrollbar(listState)
 
@@ -225,13 +233,6 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "Pick This Week, This Month, or a Custom date range",
-            fontSize = 13.sp,
-            color = Grey,
-            modifier = Modifier.padding(top = 4.dp)
-        )
-
         Spacer(modifier = Modifier.height(14.dp))
 
         // New category input row
@@ -315,8 +316,8 @@ fun CategoryScreen(
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(categories) { category ->
-                val categoryExpenses = expenses.filter { it.category == category }
+            items(activeCategoryList) { category ->
+                val categoryExpenses = expenses.filter { it.category.equals(category, ignoreCase = true) }
                 val count = categoryExpenses.size
                 val categoryTotal = categoryExpenses.sumOf { it.amount }
                 val latestExpenseWithPhoto = categoryExpenses.lastOrNull { !it.photoUri.isNullOrBlank() }
@@ -333,6 +334,12 @@ fun CategoryScreen(
                     "savings" -> "🐷"
                     "transport" -> "🚗"
                     "shopping", "clothing" -> "👕"
+                    "salary" -> "💵"
+                    "freelance" -> "💻"
+                    "investment" -> "📈"
+                    "business" -> "🏢"
+                    "gift" -> "🎁"
+                    "general income" -> "💰"
                     else -> "🎯"
                 }
 
@@ -385,7 +392,7 @@ fun CategoryScreen(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                text = "$count expense(s)",
+                                text = "$count transaction(s)",
                                 fontSize = 14.sp,
                                 color = Grey
                             )
@@ -393,7 +400,7 @@ fun CategoryScreen(
                             Spacer(modifier = Modifier.height(3.dp))
 
                             Text(
-                                text = "R %.2f spent".format(categoryTotal),
+                                text = "R %.2f total".format(categoryTotal),
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Blue
@@ -402,10 +409,7 @@ fun CategoryScreen(
 
                         IconButton(
                             onClick = {
-                                onDeleteCategory(category)
-                                if (selectedCategory == category) {
-                                    selectedCategory = null
-                                }
+                                pendingDeleteCategory = category
                             }
                         ) {
                             Icon(
@@ -418,5 +422,44 @@ fun CategoryScreen(
                 }
             }
         }
+    }
+
+    if (pendingDeleteCategory != null) {
+        val catToDelete = pendingDeleteCategory!!
+        val matchingCount = expenses.count { it.category.equals(catToDelete, ignoreCase = true) }
+
+        AlertDialog(
+            onDismissRequest = { pendingDeleteCategory = null },
+            title = { Text("Delete Category", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    text = if (matchingCount > 0) {
+                        "Warning: $matchingCount transaction(s) currently use '$catToDelete'. Deleting this category will also remove those associated transaction references."
+                    } else {
+                        "Are you sure you want to delete category '$catToDelete'?"
+                    },
+                    fontSize = 15.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteCategory(catToDelete)
+                        if (selectedCategory == catToDelete) {
+                            selectedCategory = null
+                        }
+                        pendingDeleteCategory = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete", color = White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteCategory = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
 
                 val activeUsername by vm.activeUsername.collectAsStateWithLifecycle()
                 val categories by vm.categories.collectAsStateWithLifecycle()
+                val incomeCategories by vm.incomeCategories.collectAsStateWithLifecycle()
                 val expenses by vm.expenses.collectAsStateWithLifecycle()
                 val budgetGoal by vm.budgetGoal.collectAsStateWithLifecycle()
                 @Suppress("UNUSED_VARIABLE")
@@ -122,12 +123,15 @@ class MainActivity : ComponentActivity() {
                             CategoryScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 categories = categories,
+                                incomeCategories = incomeCategories,
                                 expenses = expenses,
                                 budgetGoal = budgetGoal,
                                 totalSpent = totalSpent,
                                 spendingProgress = spendingProgress,
                                 onAddCategory = { name, onResult -> vm.addCategory(name, onResult) },
                                 onDeleteCategory = { category -> vm.deleteCategory(category) },
+                                onAddIncomeCategory = { name, onResult -> vm.addIncomeCategory(name, onResult) },
+                                onDeleteIncomeCategory = { category -> vm.deleteIncomeCategory(category) },
                                 onLogout = {
                                     vm.clearActiveUser()
                                     currentScreen = "welcome"
@@ -145,6 +149,7 @@ class MainActivity : ComponentActivity() {
                             ExpenseScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 categories = categories,
+                                incomeCategories = incomeCategories,
                                 onExpenseSaved = { expense ->
                                     vm.addExpense(expense)
                                     currentScreen = "transactions"},
