@@ -104,69 +104,6 @@ fun CategoryScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Spending progress summary card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = DarkBlue),
-            shape = RoundedCornerShape(20.dp)
-        ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Text(
-                    text = "Budget Goal Progress",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = White
-                )
-
-                Spacer(modifier = Modifier.height(5.dp))
-
-                Text(
-                    text = "This is your spending goal tracker — not the period review.",
-                    fontSize = 14.sp,
-                    color = Lavender
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "R%.2f / R%.2f".format(
-                        totalSpent,
-                        budgetGoal?.maximum ?: 0.0
-                    ),
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = White
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                LinearProgressIndicator(
-                    progress = { spendingProgress },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Blue,
-                    trackColor = Lavender
-                )
-
-                Spacer(modifier = Modifier.height(9.dp))
-
-                budgetGoal?.let { goal ->
-                    val message = when {
-                        totalSpent < goal.minimum -> "🎯 You're below your minimum spending goal."
-                        totalSpent <= goal.maximum -> "⭐ Great! You're within your spending goal."
-                        else -> "⚠️ You've exceeded your maximum goal."
-                    }
-
-                    Text(
-                        text = message,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = White
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
 
         Button(
             onClick = onAddExpense,
