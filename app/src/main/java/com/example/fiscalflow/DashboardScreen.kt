@@ -41,6 +41,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+import com.example.fiscalflow.ui.theme.FiscalFlowPurple
+
 // Theme colors for dashboard UI
 private val DashboardDarkBlue = Color(0xFF172A46)
 private val IncomeGreen = Color(0xFF15803D)
@@ -128,7 +130,7 @@ fun DashboardScreen(
             text = "FiscalFlow",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            color = DashboardDarkBlue
+            color = Color(0xFF172554)
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -137,7 +139,7 @@ fun DashboardScreen(
             text = "Your financial overview in Rands",
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = DashboardDarkBlue
+            color = Color(0xFF172554)
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -182,7 +184,7 @@ fun DashboardScreen(
             text = "Overview for this month",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = DashboardDarkBlue
+            color = Color(0xFF172554)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -247,7 +249,7 @@ fun DashboardScreen(
             text = "Top Categories",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = DashboardDarkBlue
+            color = FiscalFlowPurple
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -318,7 +320,7 @@ fun DashboardScreen(
             text = "Quick Access",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = DashboardDarkBlue
+            color = FiscalFlowPurple
         )
 
         Spacer(modifier = Modifier.height(12.dp))

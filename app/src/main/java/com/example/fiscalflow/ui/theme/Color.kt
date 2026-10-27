@@ -9,3 +9,9 @@ val Pink80 = Color(0xFFEFB8C8)
 val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
+
+// FiscalFlow Styling Improvements
+val FiscalFlowPurple = Color(0xFF7951A8)
+val FiscalFlowMutedPurple = Color(0xFF7951A8)
+val FiscalFlowInputBlack = Color.Black
+val FiscalFlowDarkGreyHint = Color(0xFF666666)

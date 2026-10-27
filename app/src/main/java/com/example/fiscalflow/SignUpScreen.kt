@@ -10,6 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fiscalflow.ui.theme.FiscalFlowInputDefaults
+import com.example.fiscalflow.ui.theme.FiscalFlowPurple
 
 @Composable
 fun SignUpScreen(
@@ -35,7 +37,8 @@ fun SignUpScreen(
         Text(
             text = "Create Account",
             fontSize = 30.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = FiscalFlowPurple
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -45,7 +48,8 @@ fun SignUpScreen(
             onValueChange = { username = it; errorMessage = null },
             label = { Text("Username", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = FiscalFlowInputDefaults.colors()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -56,7 +60,8 @@ fun SignUpScreen(
             label = { Text("Password", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = FiscalFlowInputDefaults.colors()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -67,7 +72,8 @@ fun SignUpScreen(
             label = { Text("Confirm Password", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = FiscalFlowInputDefaults.colors()
         )
 
         if (errorMessage != null) {

@@ -10,11 +10,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
+// Handles real-time listening and direct CRUD writes to Cloud Firestore
 object FiscalFlowCloudSync {
 
     private val firestore by lazy { FirebaseFirestore.getInstance() }
     private val auth by lazy { FirebaseAuth.getInstance() }
 
+    // Listens for real-time changes to user expenses in Firestore
     fun observeCloudExpenses(ownerUsername: String): Flow<List<Expense>?> = callbackFlow {
         var firestoreRegistration: ListenerRegistration? = null
 
@@ -77,6 +79,7 @@ object FiscalFlowCloudSync {
         }
     }
 
+    // Listens for real-time changes to expense categories in Firestore
     fun observeCloudCategories(ownerUsername: String): Flow<List<String>?> = callbackFlow {
         var firestoreRegistration: ListenerRegistration? = null
 
@@ -119,6 +122,7 @@ object FiscalFlowCloudSync {
         }
     }
 
+    // Listens for real-time changes to income categories in Firestore
     fun observeCloudIncomeCategories(ownerUsername: String): Flow<List<String>?> = callbackFlow {
         var firestoreRegistration: ListenerRegistration? = null
 
@@ -161,6 +165,7 @@ object FiscalFlowCloudSync {
         }
     }
 
+    // Listens for real-time changes to monthly budget goals in Firestore
     fun observeCloudBudget(ownerUsername: String): Flow<BudgetingGoal?> = callbackFlow {
         var firestoreRegistration: ListenerRegistration? = null
 
@@ -212,6 +217,7 @@ object FiscalFlowCloudSync {
         }
     }
 
+    // Listens for real-time changes to user gamification progress in Firestore
     fun observeCloudProgress(ownerUsername: String): Flow<UsersProgress?> = callbackFlow {
         var firestoreRegistration: ListenerRegistration? = null
 
@@ -257,6 +263,7 @@ object FiscalFlowCloudSync {
         }
     }
 
+    // Uploads expense directly to Firestore under current user's UID
     suspend fun uploadExpenseDirect(ownerUsername: String, expense: Expense): Boolean {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to save expense.")
@@ -282,6 +289,7 @@ object FiscalFlowCloudSync {
         return true
     }
 
+    // Deletes an expense directly from Firestore
     suspend fun deleteCloudExpenseDirect(ownerUsername: String, expenseId: Long) {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to delete expense.")
@@ -295,6 +303,7 @@ object FiscalFlowCloudSync {
         Log.i("FiscalFlowCloudSync", "CONFIRMED: Server delete for expense ID $expenseId at users/$uid/expenses/$expenseId")
     }
 
+    // Creates new expense category in Firestore
     suspend fun uploadCategoryDirect(ownerUsername: String, categoryName: String) {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to create category.")
@@ -311,6 +320,7 @@ object FiscalFlowCloudSync {
         Log.i("FiscalFlowCloudSync", "CONFIRMED: Server category write for '$categoryName' at users/$uid/categories/$categoryId")
     }
 
+    // Deletes an expense category and its matching expenses from Firestore
     suspend fun deleteCloudCategoryDirect(ownerUsername: String, categoryName: String) {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to delete category.")
@@ -337,6 +347,7 @@ object FiscalFlowCloudSync {
         Log.i("FiscalFlowCloudSync", "CONFIRMED: Server category delete for '$categoryName' at users/$uid/categories/$categoryId")
     }
 
+    // Creates new custom income category in Firestore
     suspend fun uploadIncomeCategoryDirect(ownerUsername: String, categoryName: String) {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to create income category.")
@@ -353,6 +364,7 @@ object FiscalFlowCloudSync {
         Log.i("FiscalFlowCloudSync", "CONFIRMED: Server income category write for '$categoryName' at users/$uid/income_categories/$categoryId")
     }
 
+    // Deletes custom income category and its matching income entries from Firestore
     suspend fun deleteCloudIncomeCategoryDirect(ownerUsername: String, categoryName: String) {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to delete income category.")
@@ -380,6 +392,7 @@ object FiscalFlowCloudSync {
         Log.i("FiscalFlowCloudSync", "CONFIRMED: Server income category delete for '$categoryName' at users/$uid/income_categories/$categoryId")
     }
 
+    // Saves or updates user budget goal in Firestore
     suspend fun uploadBudgetDirect(ownerUsername: String, budget: BudgetingGoal) {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to save budget goal.")
@@ -398,6 +411,7 @@ object FiscalFlowCloudSync {
             .await()
     }
 
+    // Saves or updates user gamification progress stats in Firestore
     suspend fun uploadProgressDirect(ownerUsername: String, progress: UsersProgress) {
         val uid = FirebaseIdentity.currentUid()
             ?: throw IllegalStateException("Internet connection required to update user progress.")

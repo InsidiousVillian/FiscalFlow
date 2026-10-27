@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Calendar
 
+import com.example.fiscalflow.ui.theme.FiscalFlowInputDefaults
+
 // Colours
 private val DarkBlue = Color(0xFF172554)
 private val Lavender = Color(0xFFEDE9FE)
@@ -89,7 +91,7 @@ fun BudgetingScreen(
                     "BUDGET",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
-                    color = DarkBlue
+                    color = Color(0xFF172554)
                 )
                 Text(
                     "$monthName $year",
@@ -385,6 +387,7 @@ fun BudgetGoalDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Minimum Monthly Goal") },
                     singleLine = true,
+                    colors = FiscalFlowInputDefaults.colors(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
                     )
@@ -401,6 +404,7 @@ fun BudgetGoalDialog(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Maximum Monthly Goal") },
                     singleLine = true,
+                    colors = FiscalFlowInputDefaults.colors(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
                     )

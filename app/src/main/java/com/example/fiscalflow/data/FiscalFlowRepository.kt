@@ -63,7 +63,7 @@ class FiscalFlowRepository(
         return true
     }
 
-    val defaultCategories = listOf("Groceries", "Rent", "Utilities", "Salary", "Freelance", "Investment", "Business", "Gift", "General Income")
+    val defaultCategories = listOf("")
 
     // Unified category list shared by both Expenses and Income
     @OptIn(ExperimentalCoroutinesApi::class)

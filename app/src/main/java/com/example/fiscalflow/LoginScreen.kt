@@ -14,6 +14,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.example.fiscalflow.ui.theme.FiscalFlowInputDefaults
+import com.example.fiscalflow.ui.theme.FiscalFlowPurple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +56,8 @@ fun LoginScreen(
         Text(
             text = "Welcome Back",
             fontSize = 30.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = FiscalFlowPurple
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -69,6 +72,7 @@ fun LoginScreen(
             label = { Text("Username", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            colors = FiscalFlowInputDefaults.colors(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next
@@ -86,6 +90,7 @@ fun LoginScreen(
             label = { Text("Password", fontSize = 15.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            colors = FiscalFlowInputDefaults.colors(),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,

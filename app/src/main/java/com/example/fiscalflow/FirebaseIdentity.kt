@@ -9,10 +9,12 @@ import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+// Handles Firebase Authentication, login, signup and password resets for users
 object FirebaseIdentity {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
+    // Converts simple usernames to valid Firebase email addresses
     fun firebaseEmail(username: String): String {
         val trimmed = username.trim()
         if (trimmed.contains("@")) {
@@ -22,6 +24,7 @@ object FirebaseIdentity {
         return "$normalized@fiscalflow.com"
     }
 
+    // Creates new Firebase user account or signs in if account already exists
     suspend fun registerOrSignIn(username: String, password: String): String {
         val email = firebaseEmail(username)
         return try {
@@ -41,6 +44,7 @@ object FirebaseIdentity {
         }
     }
 
+    // Signs in user with email and password
     suspend fun signIn(username: String, password: String): String {
         val email = firebaseEmail(username)
         val result = auth.signInWithEmailAndPassword(email, password).await()
@@ -48,16 +52,20 @@ object FirebaseIdentity {
             ?: throw IllegalStateException("Firebase did not return a user ID.")
     }
 
+    // Sends password reset email to user
     suspend fun sendPasswordResetEmail(email: String) {
         auth.sendPasswordResetEmail(email.trim()).await()
     }
 
+    // Gets the current logged in user's Firebase UID
     fun currentUid(): String? = auth.currentUser?.uid
 
+    // Logs out current user from Firebase
     fun signOut() {
         auth.signOut()
     }
 
+    // Makes sure a Firebase session exists, uses anonymous signin as fallback
     suspend fun ensureSignedIn(): String {
         val currentUser = auth.currentUser
 

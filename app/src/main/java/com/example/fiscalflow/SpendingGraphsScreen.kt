@@ -160,12 +160,12 @@ fun SpendingGraphsScreen(
                     text = "Spending Graphs",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
-                    color = GraphDarkBlue
+                    color = Color(0xFF172554)
                 )
                 Text(
                     text = "Category totals and monthly goals",
                     fontSize = 15.sp,
-                    color = Color.DarkGray
+                    color = GraphDarkBlue
                 )
             }
         }

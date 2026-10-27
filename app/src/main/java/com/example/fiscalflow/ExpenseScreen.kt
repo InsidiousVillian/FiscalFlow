@@ -6,7 +6,6 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,6 +54,8 @@ import coil.compose.AsyncImage
 import com.example.fiscalflow.R
 import java.util.Calendar
 
+import com.example.fiscalflow.ui.theme.FiscalFlowInputDefaults
+
 // Screen for creating expenses or income entries, picking dates, categories, and attaching receipt images
 @Composable
 fun ExpenseScreen(
@@ -88,9 +89,15 @@ fun ExpenseScreen(
     var endMonth by remember { mutableIntStateOf(today.get(Calendar.MONTH)) }
     var endYear by remember { mutableIntStateOf(currentYear) }
 
-    // Categories shared for both Expense and Income mode
-    val activeCategories = categories.ifEmpty {
-        listOf("Groceries", "Rent", "Utilities", "Salary", "Freelance", "Investment", "Business", "Gift", "General Income")
+    // Select appropriate categories based on the current mode
+    val activeCategories = if (isIncomeType) {
+        incomeCategories.ifEmpty {
+            listOf("")
+        }
+    } else {
+        categories.ifEmpty {
+            listOf("")
+        }
     }
 
     var selectedCategory by remember(isIncomeType) {
@@ -254,6 +261,7 @@ fun ExpenseScreen(
             prefix = { Text("R ", fontSize = 16.sp, fontWeight = FontWeight.Bold) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            colors = FiscalFlowInputDefaults.colors(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
 
@@ -321,6 +329,7 @@ fun ExpenseScreen(
             label = { Text("Description", fontSize = 15.sp) },
             placeholder = { Text("e.g. Monthly salary, Grocery run", fontSize = 14.sp) },
             singleLine = true,
+            colors = FiscalFlowInputDefaults.colors(),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -637,6 +646,7 @@ private fun SimpleDropdown(
             readOnly = true,
             singleLine = true,
             label = { Text(label, fontSize = 14.sp) },
+            colors = FiscalFlowInputDefaults.colors(),
             modifier = Modifier.fillMaxWidth()
         )
 

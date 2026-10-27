@@ -141,7 +141,7 @@ fun ExpensesHistoryScreen(
             text = "Category Totals & Period Review",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = HistoryDarkBlue
+            color = Color(0xFF172554)
         )
 
         Spacer(modifier = Modifier.height(4.dp))

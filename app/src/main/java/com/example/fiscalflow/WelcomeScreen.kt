@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.example.fiscalflow.ui.theme.FiscalFlowPurple
+
 private val WelcomeBlue = Color(0xFF1E3A8A)
 private val WelcomeMuted = Color(0xFF4B5563)
 private val WelcomeSoft = Color(0xFF6B7280)

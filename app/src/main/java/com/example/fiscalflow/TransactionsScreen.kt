@@ -41,6 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
+import com.example.fiscalflow.ui.theme.FiscalFlowInputDefaults
+import com.example.fiscalflow.ui.theme.FiscalFlowPurple
+
 // Theme colors
 private val TransactionDarkBlue = Color(0xFF172A46)
 private val TransactionLavender = Color(0xFFEDEBFA)
@@ -104,7 +107,7 @@ fun TransactionsScreen(
             text = "Transactions",
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
-            color = TransactionDarkBlue
+            color = Color(0xFF172554)
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -112,7 +115,7 @@ fun TransactionsScreen(
         Text(
             text = "Overview of all incomes, expenses & total spent in Rands",
             fontSize = 15.sp,
-            color = Color.DarkGray
+            color = Color(0xFF172554)
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -240,7 +243,7 @@ fun TransactionsScreen(
             text = "All Transactions",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = TransactionDarkBlue
+            color = FiscalFlowPurple
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -257,6 +260,7 @@ fun TransactionsScreen(
                 label = { Text("Search description…", fontSize = 14.sp) },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
+                colors = FiscalFlowInputDefaults.colors(),
                 shape = RoundedCornerShape(14.dp)
             )
 
