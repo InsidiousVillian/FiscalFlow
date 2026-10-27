@@ -1,6 +1,9 @@
 package com.example.fiscalflow
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import kotlin.coroutines.resume
@@ -17,6 +20,36 @@ object FirebaseIdentity {
         }
         val normalized = trimmed.lowercase(Locale.ROOT)
         return "$normalized@fiscalflow.com"
+    }
+
+    suspend fun registerOrSignIn(username: String, password: String): String {
+        val email = firebaseEmail(username)
+        return try {
+            val result = auth.createUserWithEmailAndPassword(email, password).await()
+            val uid = result.user?.uid ?: throw IllegalStateException("Firebase did not return a user UID.")
+            Log.i("FiscalFlowAuth", "Firebase createUserWithEmailAndPassword succeeded for $email -> UID: $uid")
+            uid
+        } catch (e: FirebaseAuthUserCollisionException) {
+            Log.w("FiscalFlowAuth", "Email $email already exists in Firebase Auth. Attempting sign-in to verify UID...")
+            val result = auth.signInWithEmailAndPassword(email, password).await()
+            val uid = result.user?.uid ?: throw IllegalStateException("Firebase did not return a user UID.")
+            Log.i("FiscalFlowAuth", "Firebase signInWithEmailAndPassword succeeded for $email -> UID: $uid")
+            uid
+        } catch (e: Exception) {
+            Log.e("FiscalFlowAuth", "Firebase Auth registration error for $email: ${e.message}", e)
+            throw e
+        }
+    }
+
+    suspend fun signIn(username: String, password: String): String {
+        val email = firebaseEmail(username)
+        val result = auth.signInWithEmailAndPassword(email, password).await()
+        return result.user?.uid
+            ?: throw IllegalStateException("Firebase did not return a user ID.")
+    }
+
+    suspend fun sendPasswordResetEmail(email: String) {
+        auth.sendPasswordResetEmail(email.trim()).await()
     }
 
     fun currentUid(): String? = auth.currentUser?.uid

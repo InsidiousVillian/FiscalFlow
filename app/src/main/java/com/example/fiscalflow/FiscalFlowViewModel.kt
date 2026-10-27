@@ -56,11 +56,50 @@ class FiscalFlowViewModel(app: Application) : AndroidViewModel(app) {
 
     // Actions called by UI screens
 
-    suspend fun login(username: String, password: String): Boolean =
-        repository.authenticate(username, password)
+    suspend fun login(username: String, password: String): Boolean {
+        val authenticated = repository.authenticate(username, password)
+        if (!authenticated) return false
 
-    suspend fun signUp(username: String, password: String): Boolean =
-        repository.registerUser(username, password)
+        // Attempt background Firebase Auth sign-in & UID linking if online
+        try {
+            val uid = FirebaseIdentity.signIn(username, password)
+            repository.linkFirebaseUid(username, uid)
+        } catch (e: Exception) {
+            Log.w("FiscalFlowViewModel", "Firebase sign-in unavailable during local login: ${e.message}")
+        }
+        return true
+    }
+
+    suspend fun signUp(username: String, password: String): String {
+        val trimmed = username.trim()
+        val existing = repository.findUserByUsername(trimmed)
+        if (existing != null) {
+            return "Username '$trimmed' is already taken."
+        }
+
+        var firebaseUid: String? = null
+        var firebaseError: String? = null
+
+        try {
+            firebaseUid = FirebaseIdentity.registerOrSignIn(trimmed, password)
+            Log.i("FiscalFlowAuth", "CONFIRMED: Firebase Auth registration succeeded for $trimmed with UID $firebaseUid")
+        } catch (e: Exception) {
+            firebaseError = e.localizedMessage ?: e.message ?: "Firebase Authentication failed"
+            Log.e("FiscalFlowAuth", "Firebase Auth registration failed for $trimmed: $firebaseError", e)
+        }
+
+        val created = repository.registerUser(trimmed, password)
+        if (!created) {
+            return "Failed to save account locally in database."
+        }
+
+        if (firebaseUid != null) {
+            repository.linkFirebaseUid(trimmed, firebaseUid)
+            return "SUCCESS"
+        } else {
+            return "FIREBASE_ERROR: $firebaseError"
+        }
+    }
 
     fun addCategory(name: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {

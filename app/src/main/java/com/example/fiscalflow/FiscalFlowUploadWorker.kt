@@ -18,7 +18,8 @@ class FiscalFlowUploadWorker(
     override suspend fun doWork(): Result {
         return try {
             val app = applicationContext as FiscalFlowApp
-            FiscalFlowCloudSync.uploadLocalData(app.database)
+            val owner = inputData.getString("ownerUsername") ?: app.repository.activeUsername.value.orEmpty()
+            FiscalFlowCloudSync.uploadLocalData(app.database, owner)
             Result.success()
         } catch (e: Exception) {
             Result.retry()

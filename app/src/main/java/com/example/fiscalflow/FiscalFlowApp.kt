@@ -8,6 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+
 class FiscalFlowApp : Application() {
 
     val database: AppDatabase by lazy {
@@ -16,6 +19,7 @@ class FiscalFlowApp : Application() {
 
     val repository: FiscalFlowRepository by lazy {
         FiscalFlowRepository(
+            database = database,
             userDao = database.userDao(),
             categoryDao = database.categoryDao(),
             expenseDao = database.expenseDao(),
@@ -34,11 +38,18 @@ class FiscalFlowApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        try {
+            val firestore = FirebaseFirestore.getInstance()
+            val settings = FirebaseFirestoreSettings.Builder().build()
+            firestore.firestoreSettings = settings
+        } catch (_: Exception) {}
     }
 
-    suspend fun hasCloudBackup(): Boolean {
+    suspend fun hasCloudBackup(ownerUsername: String = ""): Boolean {
         if (!IS_CLOUD_SYNC_ENABLED) return false
-        return FiscalFlowCloudSync.hasCloudData()
+        val activeOwner = ownerUsername.ifBlank { repository.activeUsername.value.orEmpty() }
+        if (activeOwner.isBlank()) return false
+        return FiscalFlowCloudSync.hasCloudDataForAccount(database, activeOwner)
     }
 
     suspend fun hasLocalFinancialData(ownerUsername: String = ""): Boolean {
@@ -49,9 +60,12 @@ class FiscalFlowApp : Application() {
                 database.budgetGoalDao().hasGoal(queryOwner)
     }
 
-    suspend fun restoreCloudData() {
+    suspend fun restoreCloudData(ownerUsername: String = "") {
         if (!IS_CLOUD_SYNC_ENABLED) return
-        FiscalFlowCloudSync.restoreCloudData(database)
+        val activeOwner = ownerUsername.ifBlank { repository.activeUsername.value.orEmpty() }
+        if (activeOwner.isNotBlank()) {
+            FiscalFlowCloudSync.restoreCloudData(database, activeOwner)
+        }
     }
 
     companion object {

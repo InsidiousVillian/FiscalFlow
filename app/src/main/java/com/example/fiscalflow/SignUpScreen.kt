@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    onSignUp: (username: String, password: String, result: (Boolean) -> Unit) -> Unit,
+    onSignUp: (username: String, password: String, result: (String) -> Unit) -> Unit,
     onSignUpSuccess: (String) -> Unit = {},
     onNavigateToLogin: () -> Unit
 ) {
@@ -87,40 +87,29 @@ fun SignUpScreen(
             enabled = !submitting,
             onClick = {
                 when {
-                    //Ensure the all registration fields
                     username.isBlank() ||
                             password.isBlank() ||
                             confirmPassword.isBlank() ->
                         errorMessage = "All fields are required"
 
-                   password != confirmPassword ->
+                    password.length < 6 ->
+                        errorMessage = "Password must be at least 6 characters long for Firebase Security."
+
+                    password != confirmPassword ->
                         errorMessage = "Passwords do not match"
 
                     else -> {
                         submitting = true
                         errorMessage = null
-                        //Register firebase account
-                        val firebaseEmail = if (username.trim().contains("@")) username.trim() else "${username.trim()}@fiscalflow.com"
-                        FirebaseAuthManager().register(
-                            email = firebaseEmail,
-                            password = password
-                        ) { firebaseSuccess, firebaseMessage ->
 
-                            if (firebaseSuccess) {
-                                //Allow for the local room database to be created too
-                                onSignUp(username.trim(), password) { success ->
-                                    submitting = false
-
-                                    if (success) {
-                                        onSignUpSuccess(username.trim())
-                                    } else {
-                                        errorMessage =
-                                            "Firebase account created, but local registration failed. Please try signing in or contact support."
-                                    }
-                                }
+                        onSignUp(username.trim(), password) { result ->
+                            submitting = false
+                            if (result == "SUCCESS") {
+                                onSignUpSuccess(username.trim())
+                            } else if (result.startsWith("FIREBASE_ERROR:")) {
+                                errorMessage = result.removePrefix("FIREBASE_ERROR:").trim()
                             } else {
-                                submitting = false
-                                errorMessage = firebaseMessage
+                                errorMessage = result
                             }
                         }
                     }

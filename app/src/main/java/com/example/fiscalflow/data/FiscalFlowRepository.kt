@@ -16,8 +16,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
+import com.example.fiscalflow.FiscalFlowCloudSync
+
 // Repository managing data flow between Room DAOs and the ViewModel.
 class FiscalFlowRepository(
+    private val database: AppDatabase? = null,
     private val userDao: UserDao,
     private val categoryDao: CategoryDao,
     private val expenseDao: ExpenseDao,
@@ -78,6 +81,31 @@ class FiscalFlowRepository(
         return ok
     }
 
+    suspend fun findUserByUsername(username: String): UserEntity? =
+        userDao.findByUsername(username.trim())
+
+    suspend fun linkFirebaseUid(username: String, uid: String): Boolean {
+        val trimmedUsername = username.trim()
+        if (trimmedUsername.isBlank() || uid.isBlank()) return false
+
+        val user = userDao.findByUsername(trimmedUsername) ?: return false
+        val linkedUser = userDao.findByFirebaseUid(uid)
+
+        if (linkedUser != null && !linkedUser.username.equals(user.username, ignoreCase = true)) {
+            Log.w(tag, "linkFirebaseUid: UID already belongs to another local account")
+            return false
+        }
+
+        if (user.firebaseUid != null && user.firebaseUid != uid) {
+            Log.w(tag, "linkFirebaseUid: existing UID does not match")
+            return false
+        }
+
+        val updatedRows = userDao.updateFirebaseUid(user.username, uid)
+        Log.d(tag, "UID link result: username=${user.username}, rowsUpdated=$updatedRows")
+        return updatedRows == 1
+    }
+
     // Seed default admin account on first app launch
     suspend fun seedDefaultUserIfEmpty() {
         if (userDao.count() == 0) {
@@ -105,6 +133,9 @@ class FiscalFlowRepository(
         if (trimmed.isEmpty()) return false
         val rowId = categoryDao.insert(CategoryEntity(name = trimmed, ownerUsername = owner))
         val inserted = rowId != -1L
+        if (inserted && database != null) {
+            FiscalFlowCloudSync.uploadCategory(database, owner, trimmed)
+        }
         Log.d(tag, "addCategory('$trimmed') inserted=$inserted for $owner")
         return inserted
     }
@@ -114,6 +145,9 @@ class FiscalFlowRepository(
         val owner = requireActiveUser() ?: return
         expenseDao.deleteByCategory(owner, category)
         categoryDao.deleteByName(owner, category)
+        if (database != null) {
+            FiscalFlowCloudSync.deleteCloudCategory(database, owner, category)
+        }
         Log.d(tag, "deleteCategory('$category') completed for $owner")
     }
 
@@ -139,6 +173,10 @@ class FiscalFlowRepository(
         val owner = requireActiveUser() ?: return -1L
         val toInsert = expense.copy(id = 0, ownerUsername = owner)
         val newId = expenseDao.insert(toInsert)
+        if (newId > 0L && database != null) {
+            val createdExpense = toInsert.copy(id = newId)
+            FiscalFlowCloudSync.uploadExpense(database, owner, createdExpense)
+        }
         Log.d(tag, "addExpense saved id=$newId amount=${expense.amount} category=${expense.category} owner=$owner")
         return newId
     }
@@ -153,12 +191,14 @@ class FiscalFlowRepository(
 
     suspend fun saveGoal(goal: BudgetingGoal) {
         val owner = requireActiveUser() ?: return
-        budgetGoalDao.upsert(
-            goal.copy(
-                id = BudgetingGoal.SINGLE_ROW_ID,
-                ownerUsername = owner
-            )
+        val toSave = goal.copy(
+            id = BudgetingGoal.SINGLE_ROW_ID,
+            ownerUsername = owner
         )
+        budgetGoalDao.upsert(toSave)
+        if (database != null) {
+            FiscalFlowCloudSync.uploadBudget(database, owner, toSave)
+        }
         Log.d(tag, "saveGoal min=${goal.minimum} max=${goal.maximum} owner=$owner")
     }
 
@@ -172,18 +212,23 @@ class FiscalFlowRepository(
 
     suspend fun saveProgress(progress: UsersProgress) {
         val owner = requireActiveUser() ?: return
-        userProgressDao.upsert(
-            progress.copy(
-                id = UsersProgress.SINGLE_ROW_ID,
-                ownerUsername = owner
-            )
+        val toSave = progress.copy(
+            id = UsersProgress.SINGLE_ROW_ID,
+            ownerUsername = owner
         )
+        userProgressDao.upsert(toSave)
+        if (database != null) {
+            FiscalFlowCloudSync.uploadProgress(database, owner, toSave)
+        }
     }
 
     suspend fun deleteExpense(expense: Expense) {
         val owner = requireActiveUser() ?: return
         val ownedExpense = expenseDao.getById(owner, expense.id) ?: return
         expenseDao.delete(ownedExpense)
+        if (database != null) {
+            FiscalFlowCloudSync.deleteCloudExpense(database, owner, expense.id)
+        }
         Log.d(tag, "deleteExpense: removed expense id=${expense.id} owner=$owner")
     }
 }
